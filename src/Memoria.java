@@ -40,18 +40,15 @@ public class Memoria {
             datos[posicionMem + offset] = bloque[offset];
     }
 
-    public int leerBloqueInstrucciones(int ir, int[] bloque){
-        ir -= 384;
+    public int leerBloqueInstrucciones(int numBloque, int[] bloque){
+        int posicionMem = numBloque * 16;
 
         // Si la dirección es negativa o empieza después del inicio del último bloque
         // Indique el error y salga del programa.
-        if(ir < 0 || ir > instrucciones.length){
-            System.out.println("La dirección de memoria " + ir + " no existe, Revise el código");
+        if(posicionMem < 0 || posicionMem > instrucciones.length){
+            System.out.println("La dirección de memoria " + posicionMem + " no existe, Revise el código");
             System.exit(-1);
         }
-
-        int numBloque = ir/16;
-        int posicionMem = numBloque * 16;
 
         for(int offset = 0; offset < 16; ++offset)
             bloque[offset] = instrucciones[posicionMem + offset];
