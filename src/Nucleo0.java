@@ -11,21 +11,22 @@ public class Nucleo0 extends Thread {
     private Pcb pcb;
 
     public Nucleo0(cacheDatosC local, chacheDatosD cacheDatosNucleo1, int quantum, Planificador planificador){
-        this.cacheDAtosLocal = local;
+        this.cacheDatosLocal = local;
         this.cacheDatosNucleo1 = cacheDatosNucleo1;
         registro = new int[32];
         this.planificador = planificador;
     }
 
-    public void copiarPcbAContextoActual(Pcb pcb){
+    private void copiarPcbAContextoActual(Pcb pcb){
         this.registro = pcb.getRegistro();
         this.idHililloActual = pcb.getId();
         this.PC = pcb.getPc();
         this.RL = -1;
+        quantumHililloActual = quantumTotal;
     }
 
     // Guarda el contexto del hilo actual y carga el contexto del siguiente hilo
-    public void siguienteHilillo(bool termiando, Pcb pcb){
+    private void siguienteHilillo(bool termiando, Pcb pcb){
         if(!terminado){
             pcb.setEstado('R');
             pcb.setRegistro(this.registro);
@@ -42,7 +43,7 @@ public class Nucleo0 extends Thread {
         copiarPcbAContextoActual(pcb);
     }
 
-    public int Alu(int operacion, int operando1, int operando2){
+    private int Alu(int operacion, int operando1, int operando2){
         int resultado = -1;
         switch(operacion){
             case 1:
@@ -61,7 +62,7 @@ public class Nucleo0 extends Thread {
         return resultado;
     }
 
-    public void decodificador(int[] instruccion){
+    private void decodificador(int[] instruccion){
         switch(instruccion[0]){
             case 19:
                 registro[instruccion[1]] = Alu(1, registro[instruccion[2]], instruccion[3]);
@@ -79,6 +80,76 @@ public class Nucleo0 extends Thread {
                 registro[instruccion[1]] = Alu(4, registro[instruccion[2]], instruccion[3]);
                 break;
             case 5:
+                int direccion = Alu(1, instruccion[2], instruccion[3]);
+                int bloqueMemoria = direccion / 4;
+                int palabra = direccion % 4;
+                int bloqueCache = bloqueMemoria / 8;
+                //lockDatosCache1.lock();
+                boolean estaEnCache = cacheDatosLocal.estaEnCache(bloqueMemoria);
+                char estado;
+                // Metodo para ver estado del bloque.
+                if(estaEnCache && estado != 'I'){
+                    //registro[instruccion[1]] = cacheDatosLocal.leerDato();
+                    //lockDatosCache1.unlock();
+                }
+                else{
+                    // revisar bloque victima
+                    // si estado = M
+                    if(lockDatosCache2.trylock() == false){
+                        //lockDatosCache1.unlock();
+
+                    }
+                    boolean estaEnOtraCache = cacheDatosNucleo1.estaEnCache(bloqueMemoria);
+                    char estadoOtraCache;
+                    if(estaEnCache){
+                        estadoOtraCache = cacheDatosNucleo1.estadoBloque(bloqueCache);
+                    }
+                    else{
+                        estadoOtraCache = 'N';
+                    }
+                    
+                    if(!estaEnOtraCache || estadoOtraCache == 'I'){
+                        //lockDatosCache2.unlock();
+                        //lockMemoriaDatos.lock();
+                        memoria.leerBloqueDatos(direccion, cacheDatosLocal[bloqueCache]);
+                        for(int i = 0; i < 32; i++){
+                            //cyclicBarrier.await();
+                            relojNucleo0++;
+                        }
+                        //lockMemoriaDatos.unlock();
+                        int dato = cacheDatosLocal.leerDato();
+                        registro[instruccion[1]] = dato;
+                        //lockDatosCache1.unlock();
+                    }
+                    else{
+                        if(estadoOtraCache == 'M'){
+                            cacheDatosNucleo1.ponerEstado('C', bloqueCache);
+                            cacheDatosLocal.ponerEstado('C', bloqueCache);
+                            cacheDatosLocal[bloqueCache] = cacheDatosNucleo1[bloqueCache];
+                            //lockMemoriaDatos.lock();
+                            memoria.escribirBloqueDatos(direccion, cacheDatosNucleo1[bloqueCache]);
+                            for(int i = 0; i < 32; i++){
+                                //cyclicBarrier.await();
+                                relojNucleo0++;
+                            }
+                            //lockMemoriaDatos.unlock();
+                            //lockDatosCache1.unlock();
+                            //lockDatosCache2.unlock();
+                        }
+                        else if(estadoOtraCache == 'C'){
+                            //lockDatosCache2.unlock();
+                            //lockMemoriaDatos.lock();
+                            int dato = memoria.leerBloqueDatos(direccion, cacheDatosLocal[bloqueCache]);
+                            for(int i = 0; i < 32; i++){
+                                //cyclicBarrier.await();
+                                relojNucleo0++;
+                            }
+                            //lockMemoriaDatos.unlock();
+                            registro[instruccion[1]] = dato;
+                            //lockDatosCache1.unlock();
+                        }
+                    }
+                }
                 break;
             case 37:
                 break;
@@ -108,9 +179,15 @@ public class Nucleo0 extends Thread {
                 break;
             case 999:
                 // Se guarda pcb en lista de procesos terminados
-                
+                siguienteHilillo(true,this.pcb);
                 break;
         }
+        quantumHililloActual--;
+        if(instruccion[0] != 5 && instruccion[0] != 37 && instruccion[0] != 51 && instruccion[0] != 52){
+            //cyclicBarrier.await();
+            //relojNucleo0++;
+        }
+        PC += 4;
     }
 
     public void run(){
