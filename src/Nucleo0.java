@@ -150,7 +150,6 @@ public class Nucleo0 extends Thread {
                             int dato = memoria.leerBloqueDatos(direccion, cacheDatosLocal[bloqueCache]);
                             for(int i = 0; i < 32; i++){
                                 //cyclicBarrier.await();
-                                relojNucleo0++;
                             }
                             //lockMemoriaDatos.unlock();
                             registro[instruccion[1]] = dato;
@@ -207,8 +206,8 @@ public class Nucleo0 extends Thread {
                                 cacheDatosNucleo1.cambiarRL(-1);
                             }
                             lockDatosCache2.unlock();
-                            lockMemoriaDatos.trylock();
-                            lockDatosCache1.trylock();
+                            lockMemoriaDatos.unlock();
+                            lockDatosCache1.unlock();
                         }
                         else{
                             lockDatosCache2.unlock();
@@ -216,14 +215,66 @@ public class Nucleo0 extends Thread {
                             int dato = memoria.leerBloqueDatos(direccion, cacheDatosLocal[bloqueCache]);
                             cacheDatosLocal[bloqueCache] = dato;
                             //Poner bloque en M
-                            lockMemoriaDatos.trylock();
-                            lockDatosCache1.trylock();
+                            lockMemoriaDatos.unlock();
+                            lockDatosCache1.unlock();
                         }
                     }
-                    else{
-                        
-                    }
                 }
+                else{
+                        // Obtener bloque victima
+                        lockMemoriaDatos.trylock();
+                        lockDatosCache1.trylock();
+                        lockDatosCache2.trylock();
+                        boolean estaEnOtraCache = cacheDatosNucleo1.estaEnCache(bloqueMemoria);
+                        if(estaEnOtraCache){
+                            char estadoEnOtraCache;
+                            if(estadoEnOtraCache == 'I'){
+                                lockDatosCache2.unlock();
+                                int dato = memoria.leerBloqueDatos(direccion, cacheDatosLocal[bloqueCache]);
+                                for(int i = 0; i < 32; i++){
+                                    //cyclicBarrier.await();
+                                }
+                                cacheDatosLocal[bloqueCache] = dato;
+                                // Modificar cache
+                                //Poner bloque en M
+                                lockMemoriaDatos.unlock();
+                                lockDatosCache1.unlock();
+                            }
+                            else if(estadoEnOtraCache == 'M'){
+                                memoria.escribirBloqueDatos(direccion, cacheDatosNucleo1[bloqueCache]);
+                                for(int i = 0; i < 32; i++){
+                                    //cyclicBarrier.await();
+                                }
+                                cacheDatosLocal[bloqueCache] = cacheDatosNucleo1[bloqueCache];
+                                cacheDatosLocal[bloqueCache] = registro[instruccion[2]];
+                                // POner bloque en M
+                            }
+                            else if(estadoEnOtraCache == 'C'){
+                                // Poner estado otro bloque en I
+                                cacheDatosLocal[bloqueCache] = registro[instruccion[2]];
+                                // POner bloque en M
+                            }
+                            if(RL == cacheDatosNucleo1.obtenerRL()){
+                                cacheDatosNucleo1.cambiarRL(-1);
+                            }
+                            lockDatosCache2.unlock();
+                            lockMemoriaDatos.unlock();
+                            lockDatosCache1.unlock();
+                        }
+                        else{
+                            lockDatosCache2.unlock();
+
+                            int dato = memoria.leerBloqueDatos(direccion, cacheDatosLocal[bloqueCache]);
+                            for(int i = 0; i < 32; i++){
+                                //cyclicBarrier.await();
+                            }
+                            cacheDatosLocal[bloqueCache] = dato;
+                            // Modificar cache
+                            //Poner bloque en M
+                            lockMemoriaDatos.unlock();
+                            lockDatosCache1.unlock();
+                        }
+                    }
                 break;
             case 99:
                 int resultado = Alu(2, registro[instruccion[1]], instruccion[2]);
