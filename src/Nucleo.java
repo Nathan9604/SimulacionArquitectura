@@ -1,5 +1,5 @@
-public class Nucleo0 extends Thread {
-    private int registro[];
+public class Nucleo extends Thread {
+    /*private int registro[];
     private int quantumTotal;
     private int quantumHililloActual;
     private CacheDatosC cacheDatosLocal;
@@ -10,7 +10,7 @@ public class Nucleo0 extends Thread {
     private Planificador planificador;
     private Pcb pcb;
 
-    public Nucleo0(cacheDatosC local, chacheDatosD cacheDatosNucleo1, int quantum, Planificador planificador){
+    public Nucleo(cacheDatosC local, chacheDatosD cacheDatosNucleo1, int quantum, Planificador planificador){
         this.cacheDatosLocal = local;
         this.cacheDatosNucleo1 = cacheDatosNucleo1;
         registro = new int[32];
@@ -191,6 +191,6 @@ public class Nucleo0 extends Thread {
     }
 
     public void run(){
-        // Este es la función que se llame con el nucleo0.start()
-    }
+        // Este es la función que se llame con el nucleo.start()
+    }*/
 }
