@@ -9,6 +9,7 @@ public class Nucleo0 extends Thread {
     private int idHililloActual;
     private Planificador planificador;
     private Pcb pcb;
+    private instruccionActual[];
 
     public Nucleo0(cacheDatosC local, chacheDatosD cacheDatosNucleo1, int quantum, Planificador planificador){
         this.cacheDatosLocal = local;
@@ -31,6 +32,10 @@ public class Nucleo0 extends Thread {
 
     public void cambiarRL(int dato){
         this.RL = dato;
+    }
+
+    private obtenerSiguienteInstruccion(){
+        
     }
 
     // Guarda el contexto del hilo actual y carga el contexto del siguiente hilo
@@ -92,19 +97,19 @@ public class Nucleo0 extends Thread {
                 int bloqueMemoria = direccion / 4;
                 int palabra = direccion % 4;
                 int bloqueCache = bloqueMemoria / 8;
-                //lockDatosCache1.lock();
+                //lockDatosCache0.lock();
                 boolean estaEnCache = cacheDatosLocal.estaEnCache(bloqueMemoria);
                 char estado;
                 // Metodo para ver estado del bloque.
                 if(estaEnCache && estado != 'I'){
                     //registro[instruccion[1]] = cacheDatosLocal.leerDato();
-                    //lockDatosCache1.unlock();
+                    //lockDatosCache0.unlock();
                 }
                 else{
                     // revisar bloque victima
                     // si estado = M
-                    if(lockDatosCache2.trylock() == false){
-                        //lockDatosCache1.unlock();
+                    if(lockDatosCache1.trylock() == false){
+                        //lockDatosCache0.unlock();
 
                     }
                     boolean estaEnOtraCache = cacheDatosNucleo1.estaEnCache(bloqueMemoria);
@@ -117,7 +122,7 @@ public class Nucleo0 extends Thread {
                     }
                     
                     if(!estaEnOtraCache || estadoOtraCache == 'I'){
-                        //lockDatosCache2.unlock();
+                        //lockDatosCache1.unlock();
                         //lockMemoriaDatos.lock();
                         memoria.leerBloqueDatos(direccion, cacheDatosLocal[bloqueCache]);
                         for(int i = 0; i < 32; i++){
@@ -127,7 +132,7 @@ public class Nucleo0 extends Thread {
                         //lockMemoriaDatos.unlock();
                         int dato = cacheDatosLocal.leerDato();
                         registro[instruccion[1]] = dato;
-                        //lockDatosCache1.unlock();
+                        //lockDatosCache0.unlock();
                     }
                     else{
                         if(estadoOtraCache == 'M'){
@@ -141,11 +146,11 @@ public class Nucleo0 extends Thread {
                                 relojNucleo0++;
                             }
                             //lockMemoriaDatos.unlock();
+                            //lockDatosCache0.unlock();
                             //lockDatosCache1.unlock();
-                            //lockDatosCache2.unlock();
                         }
                         else if(estadoOtraCache == 'C'){
-                            //lockDatosCache2.unlock();
+                            //lockDatosCache1.unlock();
                             //lockMemoriaDatos.lock();
                             int dato = memoria.leerBloqueDatos(direccion, cacheDatosLocal[bloqueCache]);
                             for(int i = 0; i < 32; i++){
@@ -153,7 +158,7 @@ public class Nucleo0 extends Thread {
                             }
                             //lockMemoriaDatos.unlock();
                             registro[instruccion[1]] = dato;
-                            //lockDatosCache1.unlock();
+                            //lockDatosCache0.unlock();
                         }
                     }
                 }
@@ -173,21 +178,21 @@ public class Nucleo0 extends Thread {
                     }
                     else if(estado == 'C'){
                         lockMemoriaDatos.trylock();
-                        lockDatosCache2.trylock();
+                        lockDatosCache1.trylock();
                         boolean estaEnOtraCache = cacheDatosNucleo1.estaEnCache(bloqueMemoria);
                         char estadoOtraCache;
                         if(estaEnCache){
                             //Metodo para ver estado en otra cache
                         }
-                        lockDatosCache2.unlock();
+                        lockDatosCache1.unlock();
                         lockMemoriaDatos.unlock();
                         cacheDatosLocal.cargarDato(bloqueCache, palabra, instruccion[2]);
                         // Metodo poner estado en M
                     }
                     else{
                         lockMemoriaDatos.trylock();
+                        lockDatosCache0.trylock();
                         lockDatosCache1.trylock();
-                        lockDatosCache2.trylock();
                         boolean estaEnOtraCache = cacheDatosNucleo1.estaEnCache(bloqueMemoria);
                         if(estaEnOtraCache){
                             char estadoEnOtraCache;
@@ -205,65 +210,31 @@ public class Nucleo0 extends Thread {
                             if(RL == cacheDatosNucleo1.obtenerRL()){
                                 cacheDatosNucleo1.cambiarRL(-1);
                             }
-                            lockDatosCache2.unlock();
-                            lockMemoriaDatos.unlock();
                             lockDatosCache1.unlock();
+                            lockMemoriaDatos.unlock();
+                            lockDatosCache0.unlock();
                         }
                         else{
-                            lockDatosCache2.unlock();
+                            lockDatosCache1.unlock();
 
                             int dato = memoria.leerBloqueDatos(direccion, cacheDatosLocal[bloqueCache]);
                             cacheDatosLocal[bloqueCache] = dato;
                             //Poner bloque en M
                             lockMemoriaDatos.unlock();
-                            lockDatosCache1.unlock();
+                            lockDatosCache0.unlock();
                         }
                     }
                 }
                 else{
-                        // Obtener bloque victima
-                        lockMemoriaDatos.trylock();
-                        lockDatosCache1.trylock();
-                        lockDatosCache2.trylock();
-                        boolean estaEnOtraCache = cacheDatosNucleo1.estaEnCache(bloqueMemoria);
-                        if(estaEnOtraCache){
-                            char estadoEnOtraCache;
-                            if(estadoEnOtraCache == 'I'){
-                                lockDatosCache2.unlock();
-                                int dato = memoria.leerBloqueDatos(direccion, cacheDatosLocal[bloqueCache]);
-                                for(int i = 0; i < 32; i++){
-                                    //cyclicBarrier.await();
-                                }
-                                cacheDatosLocal[bloqueCache] = dato;
-                                // Modificar cache
-                                //Poner bloque en M
-                                lockMemoriaDatos.unlock();
-                                lockDatosCache1.unlock();
-                            }
-                            else if(estadoEnOtraCache == 'M'){
-                                memoria.escribirBloqueDatos(direccion, cacheDatosNucleo1[bloqueCache]);
-                                for(int i = 0; i < 32; i++){
-                                    //cyclicBarrier.await();
-                                }
-                                cacheDatosLocal[bloqueCache] = cacheDatosNucleo1[bloqueCache];
-                                cacheDatosLocal[bloqueCache] = registro[instruccion[2]];
-                                // POner bloque en M
-                            }
-                            else if(estadoEnOtraCache == 'C'){
-                                // Poner estado otro bloque en I
-                                cacheDatosLocal[bloqueCache] = registro[instruccion[2]];
-                                // POner bloque en M
-                            }
-                            if(RL == cacheDatosNucleo1.obtenerRL()){
-                                cacheDatosNucleo1.cambiarRL(-1);
-                            }
-                            lockDatosCache2.unlock();
-                            lockMemoriaDatos.unlock();
+                    // Obtener bloque victima
+                    lockMemoriaDatos.trylock();
+                    lockDatosCache0.trylock();
+                    lockDatosCache1.trylock();
+                    boolean estaEnOtraCache = cacheDatosNucleo1.estaEnCache(bloqueMemoria);
+                    if(estaEnOtraCache){
+                        char estadoEnOtraCache;
+                        if(estadoEnOtraCache == 'I'){
                             lockDatosCache1.unlock();
-                        }
-                        else{
-                            lockDatosCache2.unlock();
-
                             int dato = memoria.leerBloqueDatos(direccion, cacheDatosLocal[bloqueCache]);
                             for(int i = 0; i < 32; i++){
                                 //cyclicBarrier.await();
@@ -272,9 +243,43 @@ public class Nucleo0 extends Thread {
                             // Modificar cache
                             //Poner bloque en M
                             lockMemoriaDatos.unlock();
-                            lockDatosCache1.unlock();
+                            lockDatosCache0.unlock();
                         }
+                        else if(estadoEnOtraCache == 'M'){
+                            memoria.escribirBloqueDatos(direccion, cacheDatosNucleo1[bloqueCache]);
+                            for(int i = 0; i < 32; i++){
+                                //cyclicBarrier.await();
+                            }
+                            cacheDatosLocal[bloqueCache] = cacheDatosNucleo1[bloqueCache];
+                            cacheDatosLocal[bloqueCache] = registro[instruccion[2]];
+                            // POner bloque en M
+                        }
+                        else if(estadoEnOtraCache == 'C'){
+                            // Poner estado otro bloque en I
+                            cacheDatosLocal[bloqueCache] = registro[instruccion[2]];
+                            // POner bloque en M
+                        }
+                        if(RL == cacheDatosNucleo1.obtenerRL()){
+                            cacheDatosNucleo1.cambiarRL(-1);
+                        }
+                        lockDatosCache1.unlock();
+                        lockMemoriaDatos.unlock();
+                        lockDatosCache0.unlock();
                     }
+                    else{
+                        lockDatosCache1.unlock();
+
+                        int dato = memoria.leerBloqueDatos(direccion, cacheDatosLocal[bloqueCache]);
+                        for(int i = 0; i < 32; i++){
+                            //cyclicBarrier.await();
+                        }
+                        cacheDatosLocal[bloqueCache] = dato;
+                        // Modificar cache
+                        //Poner bloque en M
+                        lockMemoriaDatos.unlock();
+                        lockDatosCache0.unlock();
+                    }
+                }
                 break;
             case 99:
                 int resultado = Alu(2, registro[instruccion[1]], instruccion[2]);
