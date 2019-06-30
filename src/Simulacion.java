@@ -12,29 +12,40 @@ public class Simulacion {
     private CacheDatosD cachedd;
     private CacheInstrucciones cachei0;
     private CacheInstrucciones cachei1;
-    private Nucleo0 nucleo0;
-    private Nucleo1 nucleo1;
+    private Nucleo nucleo0;
+    private Nucleo nucleo1;
 
     private int numHilillos;
     private int quantum;
-    int inicioInstrucciones;
+    int inicioInstrucciones = 384;
 
     public Simulacion(){
         lector = new Scanner(System.in);
 
+        // Se toman los valores de entrada
         System.out.println("Digite el número de hilillos que van a correr en la simulación.");
         numHilillos = lector.nextInt();
 
         System.out.println("Digite el valor del quantum para la simulación.");
         quantum = lector.nextInt();
 
+        // Se inicializan variables
         memoria = new Memoria();
+        cachei0 = new CacheInstrucciones(memoria);
+        cachei1 = new CacheInstrucciones(memoria);
+        cachedc = new CacheDatosC(memoria);
+        cachedd = new CacheDatosD(memoria);
+        cachedc.setOtraCache(cachedd);
+        cachedd.setOtraCache(cachedc);
         planificador = new Planificador();
-        inicioInstrucciones = 384;
     }
 
+    /**
+     * Se inicializa cada uno de los núcleos y el proceso principal esperará hasta que cada uno de los núcleos acabe
+     * para imprimir en pantalla toda la información importante de la simulación
+     */
     public void empezarSimulacion(){
-        lectorCarpeta();
+        /*lectorCarpeta();
 
         nucleo0.start();
         nucleo1.start();
@@ -49,14 +60,19 @@ public class Simulacion {
             nucleo1.join();
         } catch (InterruptedException e) {
             e.printStackTrace();
-        }
+        }*/
 
         print();
     }
 
+    /**
+     * Se busca la carpeta en donde están los archivos del código para la simulación y empieza a procesar a cada uno
+     */
     public void lectorCarpeta(){
-        File carpeta = new File("/home/nathan/Simulacion_Arqui/SimulacionArquitectura/src/ArchivosSimulacion"); // Se debe cambiar según el lugar de la carpeta
+        // Se debe cambiar según el lugar de la carpeta
+        File carpeta = new File("/home/nathan/Simulacion_Arqui/SimulacionArquitectura/src/ArchivosSimulacion");
 
+        // Si la carpeta existe cree los "hilillos"
         if (carpeta.exists()) {
             File[] archivos = carpeta.listFiles();
             int numMinHilillos;
@@ -67,6 +83,7 @@ public class Simulacion {
             else
                 numMinHilillos = archivos.length;
 
+            // Crea un PCB para cada uno de los "hilillos"
             for(int i = 0; i < numMinHilillos; ++i){
                 if(!archivos[i].isDirectory()){
                     try {
@@ -82,10 +99,15 @@ public class Simulacion {
         }
     }
 
+    /**
+     * Crea un nuevo PCB y almacena en la memoria de instrucciones cada una de las instrucciones contenidas en el archivo
+     * @param name
+     */
     public void cargaPcb(String name){
         Pcb nuevo = new Pcb(name, inicioInstrucciones);
         int[] instruccion = new int[4];
 
+        // Lee cada una de las filas del archivo y las guarda como un bloque en la memoria de instrucciones
         while (lector.hasNextLine()) {
             String linea = lector.nextLine();
             String[] digito = linea.split(" ");
@@ -97,14 +119,17 @@ public class Simulacion {
             inicioInstrucciones += 4;
         }
 
-        // TODO IMPORTANTE por ahora esto esta metiendo las cosas en la cola de listos para probar
-        // TODO RECORDAR que lo meta en la cola correspondiente para que todos funcionen bien
-        planificador.agregarProcesosTerminados(nuevo);
+        // Se agrega en la cola de procesos restantes
+        planificador.agregarProcesosRestantes(nuevo);
     }
 
+    /**
+     * Imprime en pantalla toda la información importante
+     */
     private void print(){
         planificador.print();
         memoria.print();
-        //Faltan los dos caches de datos
+        cachedd.print();
+        cachedc.print();
     }
 }
