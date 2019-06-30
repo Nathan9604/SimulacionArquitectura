@@ -1,9 +1,9 @@
-public class Nucleo extends Thread {
+public class Nucleo0 extends Thread {
     private int registro[];
     private int quantumTotal;
     private int quantumHililloActual;
-    private CacheDatosC cacheDatosLocal;
-    private CacheDatosD cacheDatosNucleo0;
+    private CacheDatosD cacheDatosLocal;
+    private CacheDatosC cacheDatosNucleo1;
     private int PC;
     private int RL;
     private int idHililloActual;
@@ -15,11 +15,11 @@ public class Nucleo extends Thread {
     private Lock lockMemoriaDatos;
     private instruccionActual[];
 
-    public Nucleo0(CacheInstrucciones instrucciones, CacheDatosC local, CacheDatosD cacheDatosNucleo0, int quantum, Planificador planificador,
-    Lock lockDatosCache1, Lock lockDatosCache0, Lock lockMemoriaDatos){
+    public Nucleo0(CacheInstrucciones instrucciones, CacheDatosD local, CacheDatosC cacheDatosNucleo1, int quantum, Planificador planificador,
+    Lock lockDatosCache0, Lock lockDatosCache1, Lock lockMemoriaDatos){
         this.cacheDatosLocal = local;
-        this.cacheDatosNucleo0 = cacheDatosNucleo0;
-        this.cacheInstrucciones = instrucciones;
+        this.cacheDatosNucleo1 = cacheDatosNucleo1;
+        this.cacheInstrucciones = instrucciones; 
         registro = new int[32];
         this.planificador = planificador;
         this.lockDatosCache0 = lockDatosCache0;
@@ -148,7 +148,7 @@ public class Nucleo extends Thread {
                 else{ // Si no esta en cache local
 
                     // Se busca si esta bloque en otra cache
-                    boolean estaEnOtraCache = cacheDatosNucleo0.existeBloque(bloqueMemoria);
+                    boolean estaEnOtraCache = cacheDatosNucleo1.existeBloque(bloqueMemoria);
                         
                     if(!estaEnOtraCache){ // Si no esta en la otra, se trae el dato
                         int dato cacheDatosLocal.leerDato(direccion);
@@ -202,7 +202,7 @@ public class Nucleo extends Thread {
                         cacheDatosLocal.escribirDato(direccion, instruccion[2]);
                     }
                     else if(estado == 'C'){
-                        boolean estaEnOtraCache = cacheDatosNucleo0.existeBloque(bloqueMemoria);
+                        boolean estaEnOtraCache = cacheDatosNucleo1.existeBloque(bloqueMemoria);
                         if(estaEnOtraCache){
                             //Poner estado otra cache en I
                         }
@@ -211,7 +211,7 @@ public class Nucleo extends Thread {
                     }
                 }
                 else{ // Busca en otra cache
-                    boolean estaEnOtraCache = cacheDatosNucleo0.existeBloque(bloqueMemoria);
+                    boolean estaEnOtraCache = cacheDatosNucleo1.existeBloque(bloqueMemoria);
                     if(estaEnOtraCache){
                         if(estadoEnOtraCache == 'M'){
                             cacheDatosLocal.cargarBloque(direccion, bloqueCache ,bloqueMemoria);
@@ -233,8 +233,8 @@ public class Nucleo extends Thread {
                             cacheDatosLocal.escribirDato(direccion, instruccion[2]);
                             // POner bloque en M
                         }
-                        if(RL == cacheDatosNucleo0.getRL()){
-                            cacheDatosNucleo0.setRL(-1);
+                        if(RL == cacheDatosNucleo1.getRL()){
+                            cacheDatosNucleo1.setRL(-1);
                         }
                     }
                     else{
@@ -284,7 +284,7 @@ public class Nucleo extends Thread {
                 else{ // Si no esta en cache local
 
                     // Se busca si esta bloque en otra cache
-                    boolean estaEnOtraCache = cacheDatosNucleo0.existeBloque(bloqueMemoria);
+                    boolean estaEnOtraCache = cacheDatosNucleo1.existeBloque(bloqueMemoria);
                         
                     if(!estaEnOtraCache){ // Si no esta en la otra, se trae el dato
                         int dato cacheDatosLocal.leerDato(direccion);
@@ -341,7 +341,7 @@ public class Nucleo extends Thread {
                             cacheDatosLocal.escribirDato(direccion, instruccion[2]);
                         }
                         else if(estado == 'C'){
-                            boolean estaEnOtraCache = cacheDatosNucleo0.existeBloque(bloqueMemoria);
+                            boolean estaEnOtraCache = cacheDatosNucleo1.existeBloque(bloqueMemoria);
                             if(estaEnOtraCache){
                                 //Poner estado otra cache en I
                             }
@@ -350,7 +350,7 @@ public class Nucleo extends Thread {
                         }
                     }
                     else{ // Busca en otra cache
-                        boolean estaEnOtraCache = cacheDatosNucleo0.existeBloque(bloqueMemoria);
+                        boolean estaEnOtraCache = cacheDatosNucleo1.existeBloque(bloqueMemoria);
                         if(estaEnOtraCache){
                             if(estadoEnOtraCache == 'M'){
                                 cacheDatosLocal.cargarBloque(direccion, bloqueCache ,bloqueMemoria);
@@ -372,8 +372,8 @@ public class Nucleo extends Thread {
                                 cacheDatosLocal.escribirDato(direccion, instruccion[2]);
                                 // POner bloque en M
                             }
-                            if(RL == cacheDatosNucleo0.getRL()){
-                                cacheDatosNucleo0.setRL(-1);
+                            if(RL == cacheDatosNucleo1.getRL()){
+                                cacheDatosNucleo1.setRL(-1);
                             }
                         }
                         else{
@@ -415,8 +415,7 @@ public class Nucleo extends Thread {
         }
     }
 
-
     public void run(){
-        // Este es la función que se llame con el nucleo.start()
+        // Este es la función que se llame con el nucleo0.start()
     }
 }
