@@ -1,10 +1,10 @@
 public class Pcb {
-    private String id;
-    private char estado;
-    private int registro[];
-    private int pc;
-    private int ir;
-    private int ciclosReloj;
+    private String id;          // Identificador del proceso
+    private char estado;        // Estado del proceso R de restante y F de finalizado
+    private int registro[];     // Guarda el estado de los 32 registros del núcleo
+    private int pc;             // Guarda el valor del PC
+    private int ir;             // Guarda el valor del IR
+    private int ciclosReloj;    // Guarda la cantidad de ciclos de reloj ocupados por el proceso para acabar
 
 
     public Pcb(String id, int pc){
@@ -12,7 +12,6 @@ public class Pcb {
         this.pc = pc;
         estado = 'R';
         registro = new int[32];
-
     }
 
     public void setEstado(char estado) {
@@ -60,10 +59,9 @@ public class Pcb {
         return ciclosReloj;
     }
 
-    public void setId(String id) {
-        this.id = id;
-    }
-
+    /**
+     * Imprime en pantalla el valor de los registros y el PC de este PCB
+     */
     public void print(){
         System.out.println("\n******************************************************************************");
         System.out.println("\tEl hilillo " + this.id + " Tiene los siguientes valores en sus registros");
