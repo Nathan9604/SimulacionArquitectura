@@ -2,6 +2,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.Scanner;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.BrokenBarrierException;
 
 public class Simulacion {
     private FileInputStream entrada = null;
@@ -14,6 +17,10 @@ public class Simulacion {
     private CacheInstrucciones cachei1;
     private Nucleo nucleo0;
     private Nucleo nucleo1;
+    private ReentrantLock lockDatosCache0;
+    private ReentrantLock lockDatosCache1;
+    private ReentrantLock lockMemoriaDatos;
+    private CyclicBarrier barrera;
 
     private int numHilillos;
     private int quantum;
@@ -38,6 +45,10 @@ public class Simulacion {
         cachedc.setOtraCache(cachedd);
         cachedd.setOtraCache(cachedc);
         planificador = new Planificador();
+        lockDatosCache0 = new ReentrantLock();
+        lockDatosCache1 = new ReentrantLock();
+        lockMemoriaDatos = new ReentrantLock();
+        barrera = new CyclicBarrier(2,null);
     }
 
     /**
@@ -45,10 +56,10 @@ public class Simulacion {
      * para imprimir en pantalla toda la información importante de la simulación
      */
     public void empezarSimulacion(){
-        /*lectorCarpeta();
+        //lectorCarpeta();
 
         nucleo0.start();
-        nucleo1.start();
+        //nucleo1.start();
 
         try {
             nucleo0.join();
@@ -56,7 +67,7 @@ public class Simulacion {
             e.printStackTrace();
         }
 
-        try {
+        /*try {
             nucleo1.join();
         } catch (InterruptedException e) {
             e.printStackTrace();

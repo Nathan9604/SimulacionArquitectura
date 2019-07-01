@@ -1,6 +1,7 @@
 public class CacheDatosC {
     private Memoria memoria;        // Referencia de la memoria principal
     private CacheDatosD otraCache;  // Referencia de la otra caché de datos
+    private int rl;                 // Referencia de el RL del núcleo
 
     private final int ENTRADASCACHE = 8;
     private final int TAMENTRADA = 4;
@@ -39,10 +40,14 @@ public class CacheDatosC {
 
             if(!existeBloque(numBloque))
                 cargarBloque(dir, numBloque);
+            else
+                otraCache.cambiarBandera(numBloque % ENTRADASCACHE, numBloque, 'I');
 
             numEntrada = indiceBloque(numBloque);
 
+            // Guarda el nuevo dato y marca el bloque como Modificado
             entrada[numDato][numEntrada] = dato;
+            estado[numEntrada] = 'M';
         }
 
         /**
@@ -112,20 +117,22 @@ public class CacheDatosC {
         public void enviarBloque(int numBloque, int[] bloque){
             int numEntrada = indiceBloque(numBloque);
 
-            // Si el bloque que vamos a enviar esta modificado lo guarda en memoria primero
-            if(estado[numEntrada] == 'M'){
-                int[] bloqueGuardar = new int[TAMENTRADA];
+            if(numEntrada != -1) {
+                // Si el bloque que vamos a enviar esta modificado lo guarda en memoria primero
+                if (estado[numEntrada] == 'M') {
+                    int[] bloqueGuardar = new int[TAMENTRADA];
 
-                for(int i = 0; i < TAMENTRADA; ++i)
-                    bloqueGuardar[i] = entrada[i][numEntrada];
+                    for (int i = 0; i < TAMENTRADA; ++i)
+                        bloqueGuardar[i] = entrada[i][numEntrada];
 
-                memoria.escribirBloqueDatos(etiqueta[numEntrada] * TAMENTRADA, bloqueGuardar);
-                estado[numEntrada] = 'C';
+                    memoria.escribirBloqueDatos(etiqueta[numEntrada] * TAMENTRADA, bloqueGuardar);
+                    estado[numEntrada] = 'C';
+                }
+
+                // Carga el bloque que se va a enviar en el vector para poder transmitirlo
+                for (int i = 0; i < TAMENTRADA; ++i)
+                    bloque[i] = entrada[i][numEntrada];
             }
-
-            // Carga el bloque que se va a enviar en el vector para poder transmitirlo
-            for(int i = 0; i < TAMENTRADA; ++i)
-                bloque[i] = entrada[i][numEntrada];
         }
 
         /**
@@ -157,7 +164,7 @@ public class CacheDatosC {
          * @return El número de la entrada del caché en donde se encuentra el bloque deseado
          */
         public int indiceBloque(int numBloque){
-            int iterador = 0;
+            int iterador = -1;
             boolean encontro = false;
 
             // Busca el índice de la entrada en donde se encuentran el bloque deseado
@@ -181,6 +188,23 @@ public class CacheDatosC {
                 bloqueMasViejo[i - 1] = bloqueMasViejo[i];
 
             bloqueMasViejo[ENTRADASVIA - 1] = masNuevo;
+        }
+
+        /**
+         * Cambia el valor de la bandera de estado de cierto bloque
+         * @param numBloque Número del bloque al que se le desea cambiar la bandera
+         * @param bandera Valor de la bandera que se desea colocar
+         */
+        public void cambiarBandera(int numBloque, char bandera){
+            int numEntrada = indiceBloque(numBloque);
+
+            if(numEntrada != -1)
+                etiqueta[numEntrada] = bandera;
+        }
+
+        public char obtenerBandera(int numBloque){
+            int numEntrada = indiceBloque(numBloque);
+            return estado[numEntrada];
         }
 
         /**
@@ -279,8 +303,23 @@ public class CacheDatosC {
         return existe;
     }
 
-    public void setOtraCache(CacheDatosD otraCache){
-        this.otraCache = otraCache;
+    /**
+     * Busca la vía en donde debe de estar el bloque al que se le desea cambiar el valor de su bandera de estado
+     * @param numBloque Es el número del bloque solicitado
+     * @param bandera Es el valor de la bandera que se quiere establecer
+     */
+    public void cambiarBandera(int numBloque, char bandera){
+        if((numBloque % 2) == 0)
+            viaPar.cambiarBandera(numBloque, bandera);
+        else
+            viaImpar.cambiarBandera(numBloque, bandera);
+    }
+
+    public char obtenerBandera(int numBloque){
+        if((numBloque % 2) == 0)
+            return viaPar.obtenerBandera(numBloque);
+        else
+            return viaImpar.obtenerBandera(numBloque);
     }
 
     /**
@@ -304,5 +343,17 @@ public class CacheDatosC {
         System.out.print("\n");
 
         System.out.println("*************************************************************************");
+    }
+
+    public void setOtraCache(CacheDatosD otraCache){
+        this.otraCache = otraCache;
+    }
+
+    public void setRl(int rl) {
+        this.rl = rl;
+    }
+
+    public int getRl() {
+        return rl;
     }
 }
