@@ -58,7 +58,9 @@ public class Simulacion {
     public void empezarSimulacion(){
         //lectorCarpeta();
 
-        nucleo0.start();
+        Nucleo0 n0 = new Nucleo0(cachei0, cachedd, cachedc, 4, planificador, lockDatosCache0, lockDatosCache1, lockMemoriaDatos, barrera);
+
+        n0.run();
         //nucleo1.start();
 
         try {
