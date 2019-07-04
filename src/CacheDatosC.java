@@ -202,6 +202,11 @@ public class CacheDatosC {
                 etiqueta[numEntrada] = bandera;
         }
 
+        public char obtenerBandera(int numBloque){
+            int numEntrada = indiceBloque(numBloque);
+            return estado[numEntrada];
+        }
+
         /**
          * Imprime una posición de dato de cada una de las entradas de la vía
          * @param fila Fila que se imprimirá en pantalla
@@ -308,6 +313,13 @@ public class CacheDatosC {
             viaPar.cambiarBandera(numBloque, bandera);
         else
             viaImpar.cambiarBandera(numBloque, bandera);
+    }
+
+    public char obtenerBandera(int numBloque){
+        if((numBloque % 2) == 0)
+            return viaPar.obtenerBandera(numBloque);
+        else
+            return viaImpar.obtenerBandera(numBloque);
     }
 
     /**

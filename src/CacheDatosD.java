@@ -35,8 +35,7 @@ public class CacheDatosD {
         if(!existeBloque(numBloqueCache, numBloque))
             cargarBloque(dir, numBloqueCache, numBloque);
         else
-            otraCache.cambiarBandera(numBloque, 'I');
-
+            otraCache.cambiarBandera(numBloque, 'I'); ///->
 
         // Se guarda el nuevo valor y se cambia la bandera a modificado
         entrada[numDato][numBloqueCache] = dato;
@@ -145,6 +144,10 @@ public class CacheDatosD {
     public void cambiarBandera(int numBloqueCache, int numBloque, char bandera){
         if(numBloque == etiqueta[numBloqueCache])
             estado[numBloqueCache] = bandera;
+    }
+
+    public char obtenerBandera(int numBloqueCache){
+        return estado[numBloqueCache];
     }
 
     /**
