@@ -2,12 +2,12 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.BrokenBarrierException;
 
-public class Nucleo extends Thread {
+public class Nucleo0 extends Thread {
     private int registro[];
     private int quantumTotal;
     private int quantumHililloActual;
-    private CacheDatosC cacheDatosLocal;
-    private CacheDatosD cacheDatosNucleo0;
+    private CacheDatosD cacheDatosLocal;
+    private CacheDatosC cacheDatosNucleo1;
     private int PC;
     private int RL;
     private String idHililloActual;
@@ -18,21 +18,21 @@ public class Nucleo extends Thread {
     private ReentrantLock lockDatosCache1;
     private ReentrantLock lockMemoriaDatos;
     private int instruccionActual[] = {83,1,2,3};
-    private int relojNucleo1;
+    private int relojNucleo0;
     private CyclicBarrier barrera;
     private boolean terminar;
 
-    public Nucleo(CacheInstrucciones instrucciones, CacheDatosC local, CacheDatosD cacheDatosNucleo0, int quantum, Planificador planificador,
+    public Nucleo0(CacheInstrucciones instrucciones, CacheDatosD local, CacheDatosC cacheDatosNucleo1, int quantum, Planificador planificador,
                    ReentrantLock lockDatosCache0, ReentrantLock lockDatosCache1, ReentrantLock lockMemoriaDatos, CyclicBarrier barrera){
         this.cacheDatosLocal = local;
-        this.cacheDatosNucleo0 = cacheDatosNucleo0;
-        this.cacheInstrucciones = instrucciones;
+        this.cacheDatosNucleo1 = cacheDatosNucleo1;
+        this.cacheInstrucciones = instrucciones; 
         registro = new int[32];
         this.planificador = planificador;
         this.lockDatosCache0 = lockDatosCache0;
         this.lockDatosCache1 = lockDatosCache1;
         this.lockMemoriaDatos = lockMemoriaDatos;
-        relojNucleo1 = 0;
+        relojNucleo0 = 0;
         this.quantumTotal = quantum;
         this.barrera = barrera;
         this.terminar = false;
@@ -64,7 +64,7 @@ public class Nucleo extends Thread {
                 } catch (BrokenBarrierException ex) {
                     return;
                 }
-                relojNucleo1++;
+                relojNucleo0++;
             }*/
         }
     }
@@ -159,7 +159,7 @@ public class Nucleo extends Thread {
                 int bloqueMemoria = direccion / 4;
                 int palabra = direccion % 4;
                 int bloqueCache = bloqueMemoria % 8;
-
+                
                 // Se bloquea cache local
                 while(intentarBloqueo() == false){
                     try {
@@ -169,11 +169,11 @@ public class Nucleo extends Thread {
                     } catch (BrokenBarrierException ex) {
                         return;
                     }
-                    relojNucleo1++;
+                    relojNucleo0++;
                 }
 
                 // Se revisa si esta el bloque en cache
-                boolean estaEnCache = cacheDatosLocal.existeBloque(bloqueMemoria);
+                boolean estaEnCache = cacheDatosLocal.existeBloque(bloqueCache, bloqueMemoria);
 
                 if(estaEnCache){
                     // Si está, y no es "I", lee el dato
@@ -182,8 +182,8 @@ public class Nucleo extends Thread {
                 else{ // Si no esta en cache local
 
                     // Se busca si esta bloque en otra cache
-                    boolean estaEnOtraCache = cacheDatosNucleo0.existeBloque(bloqueCache, bloqueMemoria);
-
+                    boolean estaEnOtraCache = cacheDatosNucleo1.existeBloque(bloqueMemoria);
+                        
                     if(!estaEnOtraCache){ // Si no esta en la otra, se trae el dato
                         int dato = cacheDatosLocal.leerDato(direccion);
                         for(int i = 0; i < 32; i++){
@@ -194,16 +194,16 @@ public class Nucleo extends Thread {
                             } catch (BrokenBarrierException ex) {
                                 return;
                             }
-                            relojNucleo1++;
+                            relojNucleo0++;
                         }
                         // Guarda el dato en el registro 
                         registro[instruccion[1]] = dato;
                     }
                     else{ // Si esta el bloque en la otra cache(esta en "M" o "C")
-                        // No se si hacer lo mismo en ambos casos("M","C")
-                        char estadoOtraCache = cacheDatosNucleo0.obtenerBandera(bloqueCache);
+                    // No se si hacer lo mismo en ambos casos("M","C")
+                        char estadoOtraCache = cacheDatosNucleo1.obtenerBandera(bloqueCache);
                         if(true){
-                            cacheDatosLocal.leerDato(direccion);
+                            cacheDatosLocal.cargarBloque(direccion, bloqueCache ,bloqueMemoria);
                             for(int i = 0; i < 32; i++){
                                 try {
                                     barrera.await();
@@ -212,7 +212,7 @@ public class Nucleo extends Thread {
                                 } catch (BrokenBarrierException ex) {
                                     return;
                                 }
-                                relojNucleo1++;
+                                relojNucleo0++;
                             }
                             int dato = cacheDatosLocal.leerDato(direccion);
                             registro[instruccion[1]] = dato;
@@ -237,10 +237,10 @@ public class Nucleo extends Thread {
                     } catch (BrokenBarrierException ex) {
                         return;
                     }
-                    relojNucleo1++;
+                    relojNucleo0++;
                 }
                 // Se revisa si esta bloque en cache
-                estaEnCache = cacheDatosLocal.existeBloque(bloqueMemoria);
+                estaEnCache = cacheDatosLocal.existeBloque(bloqueCache, bloqueMemoria);
                 char estado = cacheDatosLocal.obtenerBandera(bloqueCache);
                 if(estaEnCache){
                     if(estado == 'M'){
@@ -248,20 +248,20 @@ public class Nucleo extends Thread {
                         cacheDatosLocal.escribirDato(direccion, instruccion[2]);
                     }
                     else if(estado == 'C'){
-                        boolean estaEnOtraCache = cacheDatosNucleo0.existeBloque(bloqueCache,bloqueMemoria);
+                        boolean estaEnOtraCache = cacheDatosNucleo1.existeBloque(bloqueMemoria);
                         if(estaEnOtraCache){
-                            cacheDatosNucleo0.cambiarBandera(bloqueCache, bloqueMemoria, 'I');
+                            cacheDatosNucleo1.cambiarBandera(bloqueCache, 'I');
                         }
                         cacheDatosLocal.escribirDato(direccion, instruccion[2]);
-                        cacheDatosLocal.cambiarBandera(bloqueCache, 'M');
+                        cacheDatosLocal.cambiarBandera(bloqueCache, bloqueMemoria, 'M');
                     }
                 }
                 else{ // Busca en otra cache
-                    boolean estaEnOtraCache = cacheDatosNucleo0.existeBloque(bloqueCache,bloqueMemoria);
+                    boolean estaEnOtraCache = cacheDatosNucleo1.existeBloque(bloqueMemoria);
                     if(estaEnOtraCache){
-                        char estadoEnOtraCache = cacheDatosNucleo0.obtenerBandera(bloqueCache);
+                        char estadoEnOtraCache = cacheDatosNucleo1.obtenerBandera(bloqueCache);
                         if(estadoEnOtraCache == 'M'){
-                            cacheDatosLocal.leerDato(direccion);
+                            cacheDatosLocal.cargarBloque(direccion, bloqueCache ,bloqueMemoria);
                             for(int i = 0; i < 32; i++){
                                 try {
                                     barrera.await();
@@ -270,15 +270,15 @@ public class Nucleo extends Thread {
                                 } catch (BrokenBarrierException ex) {
                                     return;
                                 }
-                                relojNucleo1++;
+                                relojNucleo0++;
                             }
                             cacheDatosLocal.escribirDato(direccion, instruccion[2]);
-                            cacheDatosLocal.cambiarBandera(bloqueCache, 'M');
-                            cacheDatosNucleo0.cambiarBandera(bloqueCache, bloqueMemoria, 'I');
+                            cacheDatosLocal.cambiarBandera(bloqueCache, bloqueMemoria, 'M');
+                            cacheDatosNucleo1.cambiarBandera(bloqueCache, 'I');
                         }
                         else if(estadoEnOtraCache == 'C'){ // Se puede fusionar con el de arriba
-                            cacheDatosNucleo0.cambiarBandera(bloqueCache, bloqueMemoria, 'I');
-                            cacheDatosLocal.leerDato(direccion);
+                            cacheDatosNucleo1.cambiarBandera(bloqueCache, 'I');
+                            cacheDatosLocal.cargarBloque(direccion, bloqueCache ,bloqueMemoria);
                             for(int i = 0; i < 32; i++){
                                 try {
                                     barrera.await();
@@ -287,17 +287,17 @@ public class Nucleo extends Thread {
                                 } catch (BrokenBarrierException ex) {
                                     return;
                                 }
-                                relojNucleo1++;
+                                relojNucleo0++;
                             }
                             cacheDatosLocal.escribirDato(direccion, instruccion[2]);
-                            cacheDatosLocal.cambiarBandera(bloqueCache, 'M');
+                            cacheDatosLocal.cambiarBandera(bloqueCache, bloqueMemoria, 'M');
                         }
-                        if(RL == cacheDatosNucleo0.getRl()){
-                            cacheDatosNucleo0.setRl(-1);
+                        if(RL == cacheDatosNucleo1.getRl()){
+                            cacheDatosNucleo1.setRl(-1);
                         }
                     }
                     else{
-                        cacheDatosLocal.leerDato(direccion);
+                        cacheDatosLocal.cargarBloque(direccion, bloqueCache ,bloqueMemoria);
                         for(int i = 0; i < 32; i++){
                             try {
                                 barrera.await();
@@ -306,11 +306,11 @@ public class Nucleo extends Thread {
                             } catch (BrokenBarrierException ex) {
                                 return;
                             }
-                            relojNucleo1++;
+                            relojNucleo0++;
                         }
                         cacheDatosLocal.escribirDato(direccion, instruccion[2]);
                         // Se pone en modificado el bloque
-                        cacheDatosLocal.cambiarBandera(bloqueCache, 'M');
+                        cacheDatosLocal.cambiarBandera(bloqueCache, bloqueMemoria, 'M');
                     }
                 }
                 desbloquear();
@@ -339,7 +339,7 @@ public class Nucleo extends Thread {
                 bloqueMemoria = direccion / 4;
                 palabra = direccion % 4;
                 bloqueCache = bloqueMemoria % 8;
-
+                
                 // Se bloquea cache local
                 while(intentarBloqueo() == false){
                     try {
@@ -349,11 +349,11 @@ public class Nucleo extends Thread {
                     } catch (BrokenBarrierException ex) {
                         return;
                     }
-                    relojNucleo1++;
+                    relojNucleo0++;
                 }
 
                 // Se revisa si esta el bloque en cache
-                estaEnCache = cacheDatosLocal.existeBloque(bloqueMemoria);
+                estaEnCache = cacheDatosLocal.existeBloque(bloqueCache, bloqueMemoria);
 
                 if(estaEnCache){
                     // Si está, y no es "I", lee el dato
@@ -362,8 +362,8 @@ public class Nucleo extends Thread {
                 else{ // Si no esta en cache local
 
                     // Se busca si esta bloque en otra cache
-                    boolean estaEnOtraCache = cacheDatosNucleo0.existeBloque(bloqueCache,bloqueMemoria);
-
+                    boolean estaEnOtraCache = cacheDatosNucleo1.existeBloque(bloqueMemoria);
+                        
                     if(!estaEnOtraCache){ // Si no esta en la otra, se trae el dato
                         int dato = cacheDatosLocal.leerDato(direccion);
                         for(int i = 0; i < 32; i++){
@@ -374,16 +374,16 @@ public class Nucleo extends Thread {
                             } catch (BrokenBarrierException ex) {
                                 return;
                             }
-                            relojNucleo1++;
+                            relojNucleo0++;
                         }
                         // Guarda el dato en el registro 
                         registro[instruccion[1]] = dato;
                     }
                     else{ // Si esta el bloque en la otra cache(esta en "M" o "C")
-                        // No se si hacer lo mismo en ambos casos("M","C")
-                        char estadoOtraCache = cacheDatosNucleo0.obtenerBandera(bloqueCache);
+                    // No se si hacer lo mismo en ambos casos("M","C")
+                        char estadoOtraCache = cacheDatosNucleo1.obtenerBandera(bloqueCache);
                         if(true){
-                            cacheDatosLocal.leerDato(direccion);
+                            cacheDatosLocal.cargarBloque(direccion, bloqueCache ,bloqueMemoria);
                             for(int i = 0; i < 32; i++){
                                 try {
                                     barrera.await();
@@ -392,7 +392,7 @@ public class Nucleo extends Thread {
                                 } catch (BrokenBarrierException ex) {
                                     return;
                                 }
-                                relojNucleo1++;
+                                relojNucleo0++;
                             }
                             int dato = cacheDatosLocal.leerDato(direccion);
                             registro[instruccion[1]] = dato;
@@ -418,13 +418,13 @@ public class Nucleo extends Thread {
                     } catch (BrokenBarrierException ex) {
                         return;
                     }
-                    relojNucleo1++;
+                    relojNucleo0++;
                 }
 
                 if(instruccion[1] == this.RL){
                     // Se revisa si esta bloque en cache
-                    estaEnCache = cacheDatosLocal.existeBloque(bloqueMemoria);
-
+                    estaEnCache = cacheDatosLocal.existeBloque(bloqueCache, bloqueMemoria);
+                    
                     if(estaEnCache){
                         estado = cacheDatosLocal.obtenerBandera(bloqueCache);
                         if(estado == 'M'){
@@ -432,20 +432,20 @@ public class Nucleo extends Thread {
                             cacheDatosLocal.escribirDato(direccion, instruccion[2]);
                         }
                         else if(estado == 'C'){
-                            boolean estaEnOtraCache = cacheDatosNucleo0.existeBloque(bloqueCache,bloqueMemoria);
+                            boolean estaEnOtraCache = cacheDatosNucleo1.existeBloque(bloqueMemoria);
                             if(estaEnOtraCache){
-                                cacheDatosNucleo0.cambiarBandera(bloqueCache, bloqueMemoria,'I');
+                                cacheDatosNucleo1.cambiarBandera(bloqueCache, 'I');
                             }
                             cacheDatosLocal.escribirDato(direccion, instruccion[2]);
-                            cacheDatosLocal.cambiarBandera(bloqueCache, 'M');
+                            cacheDatosLocal.cambiarBandera(bloqueCache, bloqueMemoria, 'M');
                         }
                     }
                     else{ // Busca en otra cache
-                        boolean estaEnOtraCache = cacheDatosNucleo0.existeBloque(bloqueCache,bloqueMemoria);
+                        boolean estaEnOtraCache = cacheDatosNucleo1.existeBloque(bloqueMemoria);
                         if(estaEnOtraCache){
-                            char estadoEnOtraCache = cacheDatosNucleo0.obtenerBandera(bloqueCache);
+                            char estadoEnOtraCache = cacheDatosNucleo1.obtenerBandera(bloqueCache);
                             if(estadoEnOtraCache == 'M'){
-                                cacheDatosLocal.leerDato(direccion);
+                                cacheDatosLocal.cargarBloque(direccion, bloqueCache ,bloqueMemoria);
                                 for(int i = 0; i < 32; i++){
                                     try {
                                         barrera.await();
@@ -454,16 +454,16 @@ public class Nucleo extends Thread {
                                     } catch (BrokenBarrierException ex) {
                                         return;
                                     }
-                                    relojNucleo1++;
+                                    relojNucleo0++;
                                 }
                                 cacheDatosLocal.escribirDato(direccion, instruccion[2]);
                                 // Se cambian banderas
-                                cacheDatosLocal.cambiarBandera(bloqueCache, 'M');
-                                cacheDatosNucleo0.cambiarBandera(bloqueCache, bloqueMemoria,'I');
+                                cacheDatosLocal.cambiarBandera(bloqueCache, bloqueMemoria, 'M');
+                                cacheDatosNucleo1.cambiarBandera(bloqueCache, 'I');
                             }
                             else if(estadoEnOtraCache == 'C'){ // Se puede fusionar con el de arriba
-                                cacheDatosNucleo0.cambiarBandera(bloqueCache, bloqueMemoria,'I');
-                                cacheDatosLocal.leerDato(direccion);
+                                cacheDatosNucleo1.cambiarBandera(bloqueCache, 'I');
+                                cacheDatosLocal.cargarBloque(direccion, bloqueCache ,bloqueMemoria);
                                 for(int i = 0; i < 32; i++){
                                     try {
                                         barrera.await();
@@ -472,17 +472,17 @@ public class Nucleo extends Thread {
                                     } catch (BrokenBarrierException ex) {
                                         return;
                                     }
-                                    relojNucleo1++;
+                                    relojNucleo0++;
                                 }
                                 cacheDatosLocal.escribirDato(direccion, instruccion[2]);
-                                cacheDatosLocal.cambiarBandera(bloqueCache, 'M');
+                                cacheDatosLocal.cambiarBandera(bloqueCache, bloqueMemoria, 'M');
                             }
-                            if(RL == cacheDatosNucleo0.getRl()){
-                                cacheDatosNucleo0.setRl(-1);
+                            if(RL == cacheDatosNucleo1.getRl()){
+                                cacheDatosNucleo1.setRl(-1);
                             }
                         }
                         else{
-                            cacheDatosLocal.leerDato(direccion);
+                            cacheDatosLocal.cargarBloque(direccion, bloqueCache ,bloqueMemoria);
                             for(int i = 0; i < 32; i++){
                                 try {
                                     barrera.await();
@@ -491,11 +491,11 @@ public class Nucleo extends Thread {
                                 } catch (BrokenBarrierException ex) {
                                     return;
                                 }
-                                relojNucleo1++;
+                                relojNucleo0++;
                             }
                             cacheDatosLocal.escribirDato(direccion, instruccion[2]);
                             // Se pone bloque en Modificado
-                            cacheDatosLocal.cambiarBandera(bloqueCache, 'M');
+                            cacheDatosLocal.cambiarBandera(bloqueCache, bloqueMemoria, 'M');
                         }
                     }
                 }
@@ -515,6 +515,7 @@ public class Nucleo extends Thread {
             case 999:
                 // Se guarda pcb en lista de procesos terminados
                 siguienteHilillo(true,this.pcb);
+                terminar = true;
                 break;
         }
         quantumHililloActual--;
@@ -526,7 +527,7 @@ public class Nucleo extends Thread {
             } catch (BrokenBarrierException ex) {
                 return;
             }
-            relojNucleo1++;
+            relojNucleo0++;
         }
         if(instruccion[0] != 111 && instruccion[0] != 103 && instruccion[0] != 99 && instruccion[0] != 100){ // Si es un jump no hacer esto
             PC += 4;

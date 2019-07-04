@@ -66,7 +66,7 @@ public class CacheInstrucciones {
      * @param numBloque Bloque que se desea buscar
      * @return Falso si el bloque no está en caché y True si lo está
      */
-    private boolean estaEnCache(int numBloque){
+    public boolean estaEnCache(int numBloque){
         boolean esta = false;
 
         if(numBloque == etiqueta[numBloque % 8])
