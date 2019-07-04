@@ -60,11 +60,10 @@ public class Simulacion {
 
         Nucleo0 n0 = new Nucleo0(cachei0, cachedd, cachedc, 4, planificador, lockDatosCache0, lockDatosCache1, lockMemoriaDatos, barrera);
 
-        n0.run();
+        Nucleo n1 = new Nucleo(cachei1, cachedc, cachedd,4, planificador, lockDatosCache0, lockDatosCache1, lockMemoriaDatos, barrera);
 
-        /*Nucleo n1 = new Nucleo(cachei1, cachedc, cachedd,4, planificador, lockDatosCache0, lockDatosCache1, lockMemoriaDatos, barrera);
-
-        n1.run();*/
+        n0.start();
+        n1.start();
 
         try {
             n0.join();
@@ -72,11 +71,11 @@ public class Simulacion {
             e.printStackTrace();
         }
 
-        /*try {
+        try {
             n1.join();
         } catch (InterruptedException e) {
             e.printStackTrace();
-        }*/
+        }
 
         print();
     }

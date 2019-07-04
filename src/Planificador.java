@@ -40,6 +40,15 @@ public class Planificador {
         return this.procesosTerminados.poll();
     }
 
+    public boolean existenProcesosRestantes(){
+        if(this.procesosRestantes.size() == 0){
+            return false;
+        }
+        else{
+            return true;
+        }
+    }
+
     /**
      * Imprime en pantalla cada uno de los Pcbs que están en la cola de terminados
      */

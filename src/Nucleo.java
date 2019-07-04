@@ -20,6 +20,7 @@ public class Nucleo extends Thread {
     private int instruccionActual[] = {83,1,2,3};
     private int relojNucleo1;
     private CyclicBarrier barrera;
+    private boolean terminar;
 
     public Nucleo(CacheInstrucciones instrucciones, CacheDatosC local, CacheDatosD cacheDatosNucleo0, int quantum, Planificador planificador,
                    ReentrantLock lockDatosCache0, ReentrantLock lockDatosCache1, ReentrantLock lockMemoriaDatos, CyclicBarrier barrera){
@@ -34,6 +35,7 @@ public class Nucleo extends Thread {
         relojNucleo1 = 0;
         this.quantumTotal = quantum;
         this.barrera = barrera;
+        this.terminar = false;
     }
 
     private void copiarPcbAContextoActual(Pcb pcb){
@@ -68,21 +70,31 @@ public class Nucleo extends Thread {
     }
 
     // Guarda el contexto del hilo actual y carga el contexto del siguiente hilo
-    private void siguienteHilillo(boolean terminado, Pcb pcb){
-        if(!terminado){
-            pcb.setEstado('R');
-            pcb.setRegistro(this.registro);
-            pcb.setPc(this.PC);
-            planificador.agregarProcesosRestantes(pcb);
+    private boolean siguienteHilillo(boolean terminado, Pcb pcb){
+        boolean respuesta = true;
+        if(!terminar) {
+            if (!terminado) {
+                pcb.setEstado('R');
+                pcb.setRegistro(this.registro);
+                pcb.setPc(this.PC);
+                planificador.agregarProcesosRestantes(pcb);
+            } else {
+                pcb.setEstado('F');
+                pcb.setRegistro(this.registro);
+                pcb.setPc(this.PC);
+                planificador.agregarProcesosTerminados(pcb);
+            }
+            if (this.planificador.existenProcesosRestantes()) {
+                this.pcb = planificador.usarProcesosRestantes();
+                copiarPcbAContextoActual(pcb);
+            } else {
+                respuesta = false;
+            }
+            return respuesta;
         }
         else{
-            pcb.setEstado('F');
-            pcb.setRegistro(this.registro);
-            pcb.setPc(this.PC);
-            planificador.agregarProcesosTerminados(pcb);
+            return false;
         }
-        this.pcb = planificador.usarProcesosRestantes();
-        copiarPcbAContextoActual(pcb);
     }
 
     private int Alu(int operacion, int operando1, int operando2){
@@ -519,12 +531,28 @@ public class Nucleo extends Thread {
         if(instruccion[0] != 111 && instruccion[0] != 103 && instruccion[0] != 99 && instruccion[0] != 100){ // Si es un jump no hacer esto
             PC += 4;
         }
+        if(quantumHililloActual == 0){
+            terminar = true;
+        }
     }
 
     public void run(){
-        while(true){
-            obtenerSiguienteInstruccion();
-            decodificador(instruccionActual);
-        }
+        boolean primeraVez = true;
+        do{
+            terminar = false;
+            if (primeraVez) {
+                this.pcb = planificador.usarProcesosRestantes();
+                primeraVez = false;
+                this.registro = pcb.getRegistro();
+                this.idHililloActual = pcb.getId();
+                this.PC = pcb.getPc();
+                this.RL = -1;
+                quantumHililloActual = quantumTotal;
+            }
+            while (!terminar) {
+                obtenerSiguienteInstruccion();
+                decodificador(instruccionActual);
+            }
+        }while (siguienteHilillo(false, this.pcb) == true);
     }
 }
