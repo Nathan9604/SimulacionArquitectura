@@ -56,21 +56,24 @@ public class Simulacion {
      * para imprimir en pantalla toda la información importante de la simulación
      */
     public void empezarSimulacion(){
-        //lectorCarpeta();
+        lectorCarpeta();
 
         Nucleo0 n0 = new Nucleo0(cachei0, cachedd, cachedc, 4, planificador, lockDatosCache0, lockDatosCache1, lockMemoriaDatos, barrera);
 
         n0.run();
-        //nucleo1.start();
+
+        /*Nucleo n1 = new Nucleo(cachei1, cachedc, cachedd,4, planificador, lockDatosCache0, lockDatosCache1, lockMemoriaDatos, barrera);
+
+        n1.run();*/
 
         try {
-            nucleo0.join();
+            n0.join();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
         /*try {
-            nucleo1.join();
+            n1.join();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }*/
@@ -83,8 +86,9 @@ public class Simulacion {
      */
     public void lectorCarpeta(){
         // Se debe cambiar según el lugar de la carpeta
-        File carpeta = new File("/home/nathan/Simulacion_Arqui/SimulacionArquitectura/src/ArchivosSimulacion");
+        //File carpeta = new File("/home/nathan/Simulacion_Arqui/SimulacionArquitectura/src/ArchivosSimulacion");
 
+        File carpeta = new File("/home/estalg/Escritorio/Hilillos");
         // Si la carpeta existe cree los "hilillos"
         if (carpeta.exists()) {
             File[] archivos = carpeta.listFiles();
