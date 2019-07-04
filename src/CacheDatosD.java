@@ -4,6 +4,7 @@ public class CacheDatosD {
     private char estado[];          // Vector que indica el estado del bloque en cierta entrada
     private Memoria memoria;        // Referencia de la memoria principal
     private CacheDatosC otraCache;  // Referencia de la otra caché de datos
+    private int rl;                 // Referencia de el RL del núcleo
 
     private final int ENTRADASCACHE = 8;
     private final int TAMENTRADA = 4;
@@ -29,12 +30,17 @@ public class CacheDatosD {
     public void escribirDato(int dir, int dato){
         int numDato = dir % TAMENTRADA;
         int numBloque = dir / TAMENTRADA;
-        int numBloqueCache = numBloque % ENTRADASCACHE;
+        int numBloqueCache = numBloque % ENTRADASCACHE
 
         if(!existeBloque(numBloqueCache, numBloque))
             cargarBloque(dir, numBloqueCache, numBloque);
+        else
+            otraCache.cambiarBandera(numBloque, 'I');
 
+
+        // Se guarda el nuevo valor y se cambia la bandera a modificado
         entrada[numDato][numBloqueCache] = dato;
+        estado[numBloqueCache] = 'M';
     }
 
     /**
@@ -130,8 +136,15 @@ public class CacheDatosD {
         return existe;
     }
 
-    public void setOtraCache(CacheDatosC otraCache){
-        this.otraCache = otraCache;
+    /**
+     * Busca si el bloque deseado esta en la caché, si lo esta cambia el valor de su bandera de estado
+     * @param numBloqueCache Bloque en caché en donde debe de estar el bloque deseado
+     * @param numBloque Número del bloque deseado
+     * @param bandera Nuevo valor de la bandera de ese bloque de datos
+     */
+    public void cambiarBandera(int numBloqueCache, int numBloque, char bandera){
+        if(numBloque == etiqueta[numBloqueCache])
+            estado[numBloqueCache] = bandera;
     }
 
     /**
@@ -157,5 +170,17 @@ public class CacheDatosD {
         System.out.print("\n");
 
         System.out.println("*************************************************************************");
+    }
+
+    public int getRl() {
+        return rl;
+    }
+
+    public void setRl(int rl) {
+        this.rl = rl;
+    }
+
+    public void setOtraCache(CacheDatosC otraCache){
+        this.otraCache = otraCache;
     }
 }
