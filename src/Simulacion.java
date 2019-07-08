@@ -21,6 +21,7 @@ public class Simulacion {
     private ReentrantLock lockDatosCache1;
     private ReentrantLock lockMemoriaDatos;
     private CyclicBarrier barrera;
+    private int cantidadNucleosActivos;
 
     private int numHilillos;
     private int quantum;
@@ -58,9 +59,11 @@ public class Simulacion {
     public void empezarSimulacion(){
         lectorCarpeta();
 
+        cantidadNucleosActivos = 0;
+
         Nucleo0 n0 = new Nucleo0(cachei0, cachedd, cachedc, 4, planificador, lockDatosCache0, lockDatosCache1, lockMemoriaDatos, barrera);
 
-        Nucleo n1 = new Nucleo(cachei1, cachedc, cachedd,4, planificador, lockDatosCache0, lockDatosCache1, lockMemoriaDatos, barrera);
+        Nucleo n1 = new Nucleo(cachei1, cachedc, cachedd,4, planificador, lockDatosCache0, lockDatosCache1, lockMemoriaDatos, barrera, cantidadNucleosActivos);
 
         n0.start();
         n1.start();
