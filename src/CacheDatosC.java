@@ -1,6 +1,6 @@
-public class CacheDatosC {
+class CacheDatosC implements CacheDatos {
     private Memoria memoria;        // Referencia de la memoria principal
-    private CacheDatosD otraCache;  // Referencia de la otra caché de datos
+    private CacheDatos otraCache;  // Referencia de la otra caché de datos
     private int rl;                 // Referencia de el RL del núcleo
 
     private final int ENTRADASCACHE = 8;
@@ -39,9 +39,10 @@ public class CacheDatosC {
             int numEntrada;
 
             if(!existeBloque(numBloque))
+                // El 0 que se envía de parámetro se debe a que en Java no se pueden definir parámetros por defecto
                 cargarBloque(dir, numBloque);
             else
-                otraCache.cambiarBandera(numBloque % ENTRADASCACHE, numBloque, 'I');
+                otraCache.cambiarBandera(numBloque, 'I');
 
             numEntrada = indiceBloque(numBloque);
 
@@ -63,6 +64,7 @@ public class CacheDatosC {
             int numEntrada;
 
             if(!existeBloque(numBloque))
+                // El 0 que se envía de parámetro se debe a que en Java no se pueden definir parámetros por defecto
                 cargarBloque(dir, numBloque);
 
             numEntrada = indiceBloque(numBloque);
@@ -92,7 +94,7 @@ public class CacheDatosC {
             }
 
             // Si el bloque deseado está en la otra caché lo trae de ella sino lo trae desde la memoria principla
-            if(otraCache.existeBloque(numBloque % ENTRADASCACHE, numBloque))
+            if(otraCache.existeBloque(numBloque))
                 otraCache.enviarBloque(numBloque, bloque);
             else
                 memoria.leerBloqueDatos(dir, bloque);
@@ -247,9 +249,10 @@ public class CacheDatosC {
      * @param dir Dirección de memoria en donde se desea escribir el dato
      * @param dato Dato que se desea escribir
      */
+    @Override
     public void escribirDato(int dir, int dato){
-        int numDato = dir % TAMENTRADA;
-        int numBloque = dir / TAMENTRADA;
+        int numDato = (dir % 16) / 4;
+        int numBloque = dir / 16;
 
         if((numBloque % 2) == 0)
             viaPar.escribirDato(numBloque, numDato, dato, dir);
@@ -262,10 +265,11 @@ public class CacheDatosC {
      * @param dir Dirección de memoria del dato que se desea leer
      * @return El dato leído
      */
+    @Override
     public int leerDato(int dir){
         int dato;
-        int numBloque = dir / TAMENTRADA;
-        int numDato = dir % TAMENTRADA;
+        int numDato = (dir % 16) / 4;
+        int numBloque = dir / 16;
 
         if((numBloque % 2) == 0)
             dato = viaPar.leerDato(numBloque, numDato, dir);
@@ -276,10 +280,25 @@ public class CacheDatosC {
     }
 
     /**
+     * Busca el bloque que desea cargar en cierta posición de memoria.
+     * No sé usa pero debe de estar presente para que no hay errores en la interfaz CacheDatos
+     * @param dir Dirección en memoria del dato que se dese leer
+     * @param numBloque Número del bloque que se desea cargar
+     */
+    @Override
+    public void cargarBloque(int dir, int numBloque) {
+        if((numBloque % 2) == 0)
+            viaPar.cargarBloque(dir, numBloque);
+        else
+            viaImpar.cargarBloque(dir, numBloque);
+    }
+
+    /**
      * Busca la vía en donde se encuentra el bloque que se desea enviar
      * @param numBloque Número de bloque que se desea enviar
      * @param bloque Vector en donde se puede almacenar el bloque que se desea transmitir
      */
+    @Override
     public void enviarBloque(int numBloque, int[] bloque){
         if((numBloque % 2) == 0)
             viaPar.enviarBloque(numBloque, bloque);
@@ -292,6 +311,7 @@ public class CacheDatosC {
      * @param numBloque Número del bloque que se desea verificar si existe o no
      * @return False si el bloque no se encuentra en la caché de datos y True si lo hace
      */
+    @Override
     public boolean existeBloque(int numBloque){
         boolean existe = false;
 
@@ -308,6 +328,7 @@ public class CacheDatosC {
      * @param numBloque Es el número del bloque solicitado
      * @param bandera Es el valor de la bandera que se quiere establecer
      */
+    @Override
     public void cambiarBandera(int numBloque, char bandera){
         if((numBloque % 2) == 0)
             viaPar.cambiarBandera(numBloque, bandera);
@@ -315,6 +336,7 @@ public class CacheDatosC {
             viaImpar.cambiarBandera(numBloque, bandera);
     }
 
+    @Override
     public char obtenerBandera(int numBloque){
         if((numBloque % 2) == 0)
             return viaPar.obtenerBandera(numBloque);
@@ -325,6 +347,7 @@ public class CacheDatosC {
     /**
      * Imprime en pantalla la información del caché necesaria
      */
+    @Override
     public void print(){
         System.out.println("\n*************************************************************************");
 
@@ -345,14 +368,17 @@ public class CacheDatosC {
         System.out.println("*************************************************************************");
     }
 
-    public void setOtraCache(CacheDatosD otraCache){
+    @Override
+    public void setOtraCache(CacheDatos otraCache){
         this.otraCache = otraCache;
     }
 
+    @Override
     public void setRl(int rl) {
         this.rl = rl;
     }
 
+    @Override
     public int getRl() {
         return rl;
     }
