@@ -21,6 +21,7 @@ public class Nucleo extends Thread {
     private int relojNucleo1;
     private CyclicBarrier barrera;
     private boolean terminar;
+    private int cantidadNucleosActivos;
 
     public Nucleo(CacheInstrucciones instrucciones, CacheDatos local, CacheDatos cacheDatosNucleo0, int quantum, Planificador planificador,
                    ReentrantLock lockDatosCache0, ReentrantLock lockDatosCache1, ReentrantLock lockMemoriaDatos, CyclicBarrier barrera){
@@ -36,6 +37,7 @@ public class Nucleo extends Thread {
         this.quantumTotal = quantum;
         this.barrera = barrera;
         this.terminar = false;
+        this.cantidadNucleosActivos = cantidadNucleosActivos;
     }
 
     private void copiarPcbAContextoActual(Pcb pcb){
@@ -56,16 +58,18 @@ public class Nucleo extends Thread {
         }
         else{
             cacheInstrucciones.leerInstruccion(direccion, instruccionActual);
-            /*for(int i = 0; i < 32; i++){
-                try {
-                    barrera.await();
-                } catch (InterruptedException ex) {
-                    return;
-                } catch (BrokenBarrierException ex) {
-                    return;
+            for(int i = 0; i < 32; i++){
+                if(cantidadNucleosActivos == 2){
+                    try {
+                        barrera.await();
+                    } catch (InterruptedException ex) {
+                        return;
+                    } catch (BrokenBarrierException ex) {
+                        return;
+                    }
                 }
                 relojNucleo1++;
-            }*/
+            }
         }
     }
 
@@ -162,12 +166,14 @@ public class Nucleo extends Thread {
 
                 // Se bloquea cache local
                 while(intentarBloqueo() == false){
-                    try {
-                        barrera.await();
-                    } catch (InterruptedException ex) {
-                        return;
-                    } catch (BrokenBarrierException ex) {
-                        return;
+                    if(cantidadNucleosActivos == 2){
+                        try {
+                            barrera.await();
+                        } catch (InterruptedException ex) {
+                            return;
+                        } catch (BrokenBarrierException ex) {
+                            return;
+                        }
                     }
                     relojNucleo1++;
                 }
@@ -187,12 +193,14 @@ public class Nucleo extends Thread {
                     if(!estaEnOtraCache){ // Si no esta en la otra, se trae el dato
                         int dato = cacheDatosLocal.leerDato(direccion);
                         for(int i = 0; i < 32; i++){
-                            try {
-                                barrera.await();
-                            } catch (InterruptedException ex) {
-                                return;
-                            } catch (BrokenBarrierException ex) {
-                                return;
+                            if(cantidadNucleosActivos == 2){
+                                try {
+                                    barrera.await();
+                                } catch (InterruptedException ex) {
+                                    return;
+                                } catch (BrokenBarrierException ex) {
+                                    return;
+                                }
                             }
                             relojNucleo1++;
                         }
@@ -205,12 +213,14 @@ public class Nucleo extends Thread {
                         if(true){
                             cacheDatosLocal.leerDato(direccion);
                             for(int i = 0; i < 32; i++){
-                                try {
-                                    barrera.await();
-                                } catch (InterruptedException ex) {
-                                    return;
-                                } catch (BrokenBarrierException ex) {
-                                    return;
+                                if(cantidadNucleosActivos == 2){
+                                    try {
+                                        barrera.await();
+                                    } catch (InterruptedException ex) {
+                                        return;
+                                    } catch (BrokenBarrierException ex) {
+                                        return;
+                                    }
                                 }
                                 relojNucleo1++;
                             }
@@ -265,12 +275,14 @@ public class Nucleo extends Thread {
                         if(estadoEnOtraCache == 'M'){
                             cacheDatosLocal.leerDato(direccion);
                             for(int i = 0; i < 32; i++){
-                                try {
-                                    barrera.await();
-                                } catch (InterruptedException ex) {
-                                    return;
-                                } catch (BrokenBarrierException ex) {
-                                    return;
+                                if(cantidadNucleosActivos == 2){
+                                    try {
+                                        barrera.await();
+                                    } catch (InterruptedException ex) {
+                                        return;
+                                    } catch (BrokenBarrierException ex) {
+                                        return;
+                                    }
                                 }
                                 relojNucleo1++;
                             }
@@ -283,12 +295,14 @@ public class Nucleo extends Thread {
                             cacheDatosNucleo0.cambiarBandera(bloqueMemoria, 'I');
                             cacheDatosLocal.leerDato(direccion);
                             for(int i = 0; i < 32; i++){
-                                try {
-                                    barrera.await();
-                                } catch (InterruptedException ex) {
-                                    return;
-                                } catch (BrokenBarrierException ex) {
-                                    return;
+                                if(cantidadNucleosActivos == 2){
+                                    try {
+                                        barrera.await();
+                                    } catch (InterruptedException ex) {
+                                        return;
+                                    } catch (BrokenBarrierException ex) {
+                                        return;
+                                    }
                                 }
                                 relojNucleo1++;
                             }
@@ -302,12 +316,14 @@ public class Nucleo extends Thread {
                     else{
                         cacheDatosLocal.leerDato(direccion);
                         for(int i = 0; i < 32; i++){
-                            try {
-                                barrera.await();
-                            } catch (InterruptedException ex) {
-                                return;
-                            } catch (BrokenBarrierException ex) {
-                                return;
+                            if(cantidadNucleosActivos == 2){
+                                try {
+                                    barrera.await();
+                                } catch (InterruptedException ex) {
+                                    return;
+                                } catch (BrokenBarrierException ex) {
+                                    return;
+                                }
                             }
                             relojNucleo1++;
                         }
@@ -346,12 +362,14 @@ public class Nucleo extends Thread {
 
                 // Se bloquea cache local
                 while(intentarBloqueo() == false){
-                    try {
-                        barrera.await();
-                    } catch (InterruptedException ex) {
-                        return;
-                    } catch (BrokenBarrierException ex) {
-                        return;
+                    if(cantidadNucleosActivos == 2){
+                        try {
+                            barrera.await();
+                        } catch (InterruptedException ex) {
+                            return;
+                        } catch (BrokenBarrierException ex) {
+                            return;
+                        }
                     }
                     relojNucleo1++;
                 }
@@ -371,12 +389,14 @@ public class Nucleo extends Thread {
                     if(!estaEnOtraCache){ // Si no esta en la otra, se trae el dato
                         int dato = cacheDatosLocal.leerDato(direccion);
                         for(int i = 0; i < 32; i++){
-                            try {
-                                barrera.await();
-                            } catch (InterruptedException ex) {
-                                return;
-                            } catch (BrokenBarrierException ex) {
-                                return;
+                            if(cantidadNucleosActivos == 2){
+                                try {
+                                    barrera.await();
+                                } catch (InterruptedException ex) {
+                                    return;
+                                } catch (BrokenBarrierException ex) {
+                                    return;
+                                }
                             }
                             relojNucleo1++;
                         }
@@ -389,12 +409,14 @@ public class Nucleo extends Thread {
                         if(true){
                             cacheDatosLocal.leerDato(direccion);
                             for(int i = 0; i < 32; i++){
-                                try {
-                                    barrera.await();
-                                } catch (InterruptedException ex) {
-                                    return;
-                                } catch (BrokenBarrierException ex) {
-                                    return;
+                                if(cantidadNucleosActivos == 2){
+                                    try {
+                                        barrera.await();
+                                    } catch (InterruptedException ex) {
+                                        return;
+                                    } catch (BrokenBarrierException ex) {
+                                        return;
+                                    }
                                 }
                                 relojNucleo1++;
                             }
@@ -415,12 +437,14 @@ public class Nucleo extends Thread {
 
                 // Se bloquea cache local
                 while(intentarBloqueo() == false){
-                    try {
-                        barrera.await();
-                    } catch (InterruptedException ex) {
-                        return;
-                    } catch (BrokenBarrierException ex) {
-                        return;
+                    if(cantidadNucleosActivos == 2){
+                        try {
+                            barrera.await();
+                        } catch (InterruptedException ex) {
+                            return;
+                        } catch (BrokenBarrierException ex) {
+                            return;
+                        }
                     }
                     relojNucleo1++;
                 }
@@ -451,12 +475,14 @@ public class Nucleo extends Thread {
                             if(estadoEnOtraCache == 'M'){
                                 cacheDatosLocal.leerDato(direccion);
                                 for(int i = 0; i < 32; i++){
-                                    try {
-                                        barrera.await();
-                                    } catch (InterruptedException ex) {
-                                        return;
-                                    } catch (BrokenBarrierException ex) {
-                                        return;
+                                    if(cantidadNucleosActivos == 2){
+                                        try {
+                                            barrera.await();
+                                        } catch (InterruptedException ex) {
+                                            return;
+                                        } catch (BrokenBarrierException ex) {
+                                            return;
+                                        }
                                     }
                                     relojNucleo1++;
                                 }
@@ -469,12 +495,14 @@ public class Nucleo extends Thread {
                                 cacheDatosNucleo0.cambiarBandera(bloqueMemoria,'I');
                                 cacheDatosLocal.leerDato(direccion);
                                 for(int i = 0; i < 32; i++){
-                                    try {
-                                        barrera.await();
-                                    } catch (InterruptedException ex) {
-                                        return;
-                                    } catch (BrokenBarrierException ex) {
-                                        return;
+                                    if(cantidadNucleosActivos == 2){
+                                        try {
+                                            barrera.await();
+                                        } catch (InterruptedException ex) {
+                                            return;
+                                        } catch (BrokenBarrierException ex) {
+                                            return;
+                                        }
                                     }
                                     relojNucleo1++;
                                 }
@@ -488,12 +516,14 @@ public class Nucleo extends Thread {
                         else{
                             cacheDatosLocal.leerDato(direccion);
                             for(int i = 0; i < 32; i++){
-                                try {
-                                    barrera.await();
-                                } catch (InterruptedException ex) {
-                                    return;
-                                } catch (BrokenBarrierException ex) {
-                                    return;
+                                if(cantidadNucleosActivos == 2){
+                                    try {
+                                        barrera.await();
+                                    } catch (InterruptedException ex) {
+                                        return;
+                                    } catch (BrokenBarrierException ex) {
+                                        return;
+                                    }
                                 }
                                 relojNucleo1++;
                             }
@@ -523,12 +553,14 @@ public class Nucleo extends Thread {
         }
         quantumHililloActual--;
         if(instruccion[0] != 5 && instruccion[0] != 37 && instruccion[0] != 51 && instruccion[0] != 52){
-            try {
-                barrera.await();
-            } catch (InterruptedException ex) {
-                return;
-            } catch (BrokenBarrierException ex) {
-                return;
+            if(cantidadNucleosActivos == 2){
+                try {
+                    barrera.await();
+                } catch (InterruptedException ex) {
+                    return;
+                } catch (BrokenBarrierException ex) {
+                    return;
+                }
             }
             relojNucleo1++;
         }
@@ -542,6 +574,7 @@ public class Nucleo extends Thread {
 
     public void run(){
         boolean primeraVez = true;
+        cantidadNucleosActivos++;
         do{
             terminar = false;
             if (primeraVez) {
@@ -558,5 +591,6 @@ public class Nucleo extends Thread {
                 decodificador(instruccionActual);
             }
         }while (siguienteHilillo(false, this.pcb) == true);
+        cantidadNucleosActivos--;
     }
 }
