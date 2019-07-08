@@ -30,7 +30,7 @@ public class CacheDatosD {
     public void escribirDato(int dir, int dato){
         int numDato = dir % TAMENTRADA;
         int numBloque = dir / TAMENTRADA;
-        int numBloqueCache = numBloque % ENTRADASCACHE;
+        int numBloqueCache = numBloque % ENTRADASCACHE
 
         if(!existeBloque(numBloqueCache, numBloque))
             cargarBloque(dir, numBloqueCache, numBloque);
