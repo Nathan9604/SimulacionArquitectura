@@ -61,12 +61,12 @@ public class Simulacion {
 
         cantidadNucleosActivos = 0;
 
-        Nucleo n0 = new Nucleo(cachei0, cachedc, cachedd,quantum, planificador, barrera, cantidadNucleosActivos);
+        Nucleo n0 = new Nucleo(cachei0, cachedd, cachedc,quantum, planificador, barrera, cantidadNucleosActivos, 0);
 
-        Nucleo n1 = new Nucleo(cachei1, cachedc, cachedd,quantum, planificador, barrera, cantidadNucleosActivos);
+        Nucleo n1 = new Nucleo(cachei1, cachedc, cachedd,quantum, planificador, barrera, cantidadNucleosActivos, 1);
 
         n0.start();
-        //n1.start();
+        n1.start();
 
         try {
             n0.join();
@@ -88,9 +88,9 @@ public class Simulacion {
      */
     public void lectorCarpeta(){
         // Se debe cambiar según el lugar de la carpeta
-        File carpeta = new File("/home/nathan/Simulacion_Arqui/SimulacionArquitectura/src/ArchivosSimulacion");
+        //File carpeta = new File("/home/nathan/Simulacion_Arqui/SimulacionArquitectura/src/ArchivosSimulacion");
 
-        //File carpeta = new File("/home/estalg/Escritorio/Hilillos");
+        File carpeta = new File("/home/estalg/Escritorio/SimulacionArquitectura/src/ArchivosSimulacion");
         // Si la carpeta existe cree los "hilillos"
         if (carpeta.exists()) {
             File[] archivos = carpeta.listFiles();

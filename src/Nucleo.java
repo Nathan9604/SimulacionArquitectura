@@ -1,6 +1,7 @@
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.TimeUnit;
 
 public class Nucleo extends Thread {
     private Pcb pcb;
@@ -24,9 +25,13 @@ public class Nucleo extends Thread {
 
     private CyclicBarrier barrera;
 
+    private int idNucleo;
+
+    private boolean primeraVez;
+
 
     public Nucleo(CacheInstrucciones instrucciones, CacheDatos local, CacheDatos otroCacheDatos, int quantum, Planificador planificador, CyclicBarrier barrera,
-                  int cantidadNucleosActivos){
+                  int cantidadNucleosActivos, int idNucleo){
         this.cacheDatosLocal = local;
         this.otroCacheDatos = otroCacheDatos;
         this.cacheInstrucciones = instrucciones;
@@ -38,6 +43,8 @@ public class Nucleo extends Thread {
         this.barrera = barrera;
         this.IR = 0;
         this.cantidadNucleosActivos = cantidadNucleosActivos;
+        this.idNucleo = idNucleo;
+        this.primeraVez = true;
     }
 
     private void decodificador(int[] instruccion){
@@ -192,6 +199,7 @@ public class Nucleo extends Thread {
     public void cicloReloj(int numCiclos){
         for(int i = 0; i < numCiclos; i++){
             if(cantidadNucleosActivos > 1){
+                System.out.print("Pasa por barrera");
                 try {
                     barrera.await();
                 } catch (InterruptedException ex) {
@@ -201,6 +209,18 @@ public class Nucleo extends Thread {
                 }
             }
             ++reloj;
+            if(idNucleo == 0) {
+                System.out.print("Hilillo corriendo en núcleo" + this.idNucleo + " es " + this.idHililloActual + ", reloj: " + this.reloj);
+            }
+
+            if(idNucleo == 1)
+                System.out.print(" /// Hilillo corriendo en núcleo" + this.idNucleo + " es " + this.idHililloActual + ", reloj: " + this.reloj + "\r");
+
+            try {
+                Thread.sleep(300);
+            } catch(InterruptedException e) {
+                System.out.println("got interrupted!");
+            }
         }
     }
 }
