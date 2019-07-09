@@ -1,6 +1,6 @@
-public class CacheDatosC {
+class CacheDatosC implements CacheDatos {
     private Memoria memoria;        // Referencia de la memoria principal
-    private CacheDatosD otraCache;  // Referencia de la otra caché de datos
+    private CacheDatos otraCache;  // Referencia de la otra caché de datos
     private int rl;                 // Referencia de el RL del núcleo
 
     private final int ENTRADASCACHE = 8;
@@ -34,20 +34,24 @@ public class CacheDatosC {
          * @param numDato Posición con respecto al bloque en donde se encuentra el dato que se desea modificar
          * @param dato Dato que se desea almacenar en el bloque
          * @param dir Dirección de memoria en donde se va a almacenar el dato
+         * @return numCiclos Cantidad de ciclos que toma escribir el dato en caché
          */
-        public void escribirDato(int numBloque, int numDato, int dato, int dir){
+        public int escribirDato(int numBloque, int numDato, int dato, int dir){
             int numEntrada;
+            int numCiclos = 1;
 
             if(!existeBloque(numBloque))
-                cargarBloque(dir, numBloque);
+                numCiclos = cargarBloque(dir, numBloque);
             else
-                otraCache.cambiarBandera(numBloque % ENTRADASCACHE, numBloque, 'I');
+                otraCache.cambiarBandera(numBloque, 'I');
 
             numEntrada = indiceBloque(numBloque);
 
             // Guarda el nuevo dato y marca el bloque como Modificado
             entrada[numDato][numEntrada] = dato;
             estado[numEntrada] = 'M';
+
+            return numCiclos;
         }
 
         /**
@@ -56,20 +60,18 @@ public class CacheDatosC {
          * @param numBloque Número de bloque que se desea conseguir
          * @param numDato Posición con respecto al bloque en donde se encuentra el dato que se desea leer
          * @param dir Dirección de memoria en donde se va a leer el dato
-         * @return El dato que se desea leer
+         * @param datos Vector para almacenar el dato que se desea leer y numCiclos Cantidad de ciclos que toma leer el dato en caché
          */
-        public int leerDato(int numBloque, int numDato, int dir){
-            int dato;
+        public void leerDato(int numBloque, int numDato, int dir, int datos[]){
             int numEntrada;
+            datos[1] = 1; // Si el dato está en nuestro caché solo toma 1 ciclo de reloj
 
             if(!existeBloque(numBloque))
-                cargarBloque(dir, numBloque);
+                datos[1] = cargarBloque(dir, numBloque);
 
             numEntrada = indiceBloque(numBloque);
 
-            dato = entrada[numDato][numEntrada];
-
-            return dato;
+            datos[0] = entrada[numDato][numEntrada];
         }
 
         /**
@@ -78,10 +80,12 @@ public class CacheDatosC {
          * esa posición
          * @param dir Dirección del bloque que se desea cargar
          * @param numBloque Número del bloque que se desea cargar
+         * @return numCiclos Cantidad de ciclos para realizar la instrucción
          */
-        public void cargarBloque(int dir, int numBloque){
+        public int cargarBloque(int dir, int numBloque){
             int[] bloque = new int[4];
             int numEntrada = bloqueMasViejo[0]; // Vamos a cambiar el bloque más viejo
+            int numCiclos = 0;
 
             // Si el bloque de memoria en donde se va a cargar el nuevo esta modificado lo guarda en memoria
             if(estado[numEntrada] == 'M') {
@@ -89,13 +93,19 @@ public class CacheDatosC {
                     bloque[i] = entrada[i][numEntrada];
 
                 memoria.escribirBloqueDatos(etiqueta[numEntrada] * TAMENTRADA, bloque);
+
+                numCiclos = 32;
             }
 
             // Si el bloque deseado está en la otra caché lo trae de ella sino lo trae desde la memoria principla
-            if(otraCache.existeBloque(numBloque % ENTRADASCACHE, numBloque))
+            if(otraCache.existeBloque(numBloque)) {
                 otraCache.enviarBloque(numBloque, bloque);
-            else
+                numCiclos += 2;
+            }
+            else {
                 memoria.leerBloqueDatos(dir, bloque);
+                numCiclos += 32;
+            }
 
             // Modifica el índice que indica cual es la entrada más vieja de la via
             modificarMasViejo();
@@ -106,6 +116,8 @@ public class CacheDatosC {
 
             estado[numEntrada] = 'C';
             etiqueta[numEntrada] = numBloque;
+
+            return numCiclos;
         }
 
         /**
@@ -164,18 +176,21 @@ public class CacheDatosC {
          * @return El número de la entrada del caché en donde se encuentra el bloque deseado
          */
         public int indiceBloque(int numBloque){
-            int iterador = -1;
+            int posicion = -1;
+            int iterador = 0;
             boolean encontro = false;
 
             // Busca el índice de la entrada en donde se encuentran el bloque deseado
             while(iterador < ENTRADASVIA && encontro == false){
-                if(numBloque == etiqueta[iterador])
+                if(numBloque == etiqueta[iterador]){
                     encontro = true;
+                    posicion = iterador;
+                }
                 else
                     ++iterador;
             }
 
-            return iterador;
+            return posicion;
         }
 
         /**
@@ -246,33 +261,55 @@ public class CacheDatosC {
      * Busca la vía en donde se desea escribir el dato
      * @param dir Dirección de memoria en donde se desea escribir el dato
      * @param dato Dato que se desea escribir
+     * @return numCiclos Cantidad de ciclos que toma escribir el dato en caché
      */
-    public void escribirDato(int dir, int dato){
-        int numDato = dir % TAMENTRADA;
-        int numBloque = dir / TAMENTRADA;
+    @Override
+    public int escribirDato(int dir, int dato){
+        int numDato = (dir % 16) / 4;
+        int numBloque = dir / 16;
+        int numCiclos = 1;
 
         if((numBloque % 2) == 0)
-            viaPar.escribirDato(numBloque, numDato, dato, dir);
+            numCiclos = viaPar.escribirDato(numBloque, numDato, dato, dir);
         else
-            viaImpar.escribirDato(numBloque, numDato, dato, dir);
+            numCiclos = viaImpar.escribirDato(numBloque, numDato, dato, dir);
+
+        return numCiclos;
     }
 
     /**
      * Busca la vía en donde se desea leer el dato
      * @param dir Dirección de memoria del dato que se desea leer
-     * @return El dato leído
+     * @param datos vector para almacenar el dato leído y numCiclos que es la cantidad de ciclos que tomo leer el dato de la caché
      */
-    public int leerDato(int dir){
-        int dato;
-        int numBloque = dir / TAMENTRADA;
-        int numDato = dir % TAMENTRADA;
+    @Override
+    public void leerDato(int dir, int[] datos){
+        int numDato = (dir % 16) / 4;
+        int numBloque = dir / 16;
 
         if((numBloque % 2) == 0)
-            dato = viaPar.leerDato(numBloque, numDato, dir);
+            viaPar.leerDato(numBloque, numDato, dir, datos);
         else
-            dato = viaImpar.leerDato(numBloque, numDato, dir);
+            viaImpar.leerDato(numBloque, numDato, dir, datos);
+    }
 
-        return dato;
+    /**
+     * Busca el bloque que desea cargar en cierta posición de memoria.
+     * No sé usa pero debe de estar presente para que no hay errores en la interfaz CacheDatos
+     * @param dir Dirección en memoria del dato que se dese leer
+     * @param numBloque Número del bloque que se desea cargar
+     * @return numCiclos Cantidad de ciclos que tomo cargar el bloque a caché
+     */
+    @Override
+    public int cargarBloque(int dir, int numBloque) {
+        int numCiclos;
+
+        if((numBloque % 2) == 0)
+            numCiclos = viaPar.cargarBloque(dir, numBloque);
+        else
+            numCiclos = viaImpar.cargarBloque(dir, numBloque);
+
+        return numCiclos;
     }
 
     /**
@@ -280,6 +317,7 @@ public class CacheDatosC {
      * @param numBloque Número de bloque que se desea enviar
      * @param bloque Vector en donde se puede almacenar el bloque que se desea transmitir
      */
+    @Override
     public void enviarBloque(int numBloque, int[] bloque){
         if((numBloque % 2) == 0)
             viaPar.enviarBloque(numBloque, bloque);
@@ -292,6 +330,7 @@ public class CacheDatosC {
      * @param numBloque Número del bloque que se desea verificar si existe o no
      * @return False si el bloque no se encuentra en la caché de datos y True si lo hace
      */
+    @Override
     public boolean existeBloque(int numBloque){
         boolean existe = false;
 
@@ -308,6 +347,7 @@ public class CacheDatosC {
      * @param numBloque Es el número del bloque solicitado
      * @param bandera Es el valor de la bandera que se quiere establecer
      */
+    @Override
     public void cambiarBandera(int numBloque, char bandera){
         if((numBloque % 2) == 0)
             viaPar.cambiarBandera(numBloque, bandera);
@@ -315,6 +355,7 @@ public class CacheDatosC {
             viaImpar.cambiarBandera(numBloque, bandera);
     }
 
+    @Override
     public char obtenerBandera(int numBloque){
         if((numBloque % 2) == 0)
             return viaPar.obtenerBandera(numBloque);
@@ -325,6 +366,7 @@ public class CacheDatosC {
     /**
      * Imprime en pantalla la información del caché necesaria
      */
+    @Override
     public void print(){
         System.out.println("\n*************************************************************************");
 
@@ -345,14 +387,17 @@ public class CacheDatosC {
         System.out.println("*************************************************************************");
     }
 
-    public void setOtraCache(CacheDatosD otraCache){
+    @Override
+    public void setOtraCache(CacheDatos otraCache){
         this.otraCache = otraCache;
     }
 
+    @Override
     public void setRl(int rl) {
         this.rl = rl;
     }
 
+    @Override
     public int getRl() {
         return rl;
     }

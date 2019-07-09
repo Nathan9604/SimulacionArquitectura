@@ -19,17 +19,23 @@ public class CacheInstrucciones {
      * Se busca el bloque en donde se encuentra la instrucción deseada para ser leída
      * @param ir Indicador de la instrucción que desea ser leída
      * @param instruccion Vector en donde se almacena la instrucción para transmitirla
+     * @return numCiclos es el valor de ciclos que tomo realizar la lectura del caché
      */
-    public void leerInstruccion(int ir, int[] instruccion){
+    public int leerInstruccion(int ir, int[] instruccion){
         ir -= 384;
         int numBloque = ir / 16;
         int numBloqueCache = numBloque % 8;
         int numInstruccion = (ir % 16) / 4;
+        int numCiclos = 1;
 
-        if(!estaEnCache(numBloque))
+        if(!estaEnCache(numBloque)) {
             leerMemoriaInstruccion(numBloque, numBloqueCache);
+            numCiclos = 32;
+        }
 
         cargarInstruccion(numBloqueCache, numInstruccion, instruccion);
+
+        return numCiclos;
     }
 
     /**
