@@ -27,7 +27,7 @@ public class Nucleo extends Thread {
 
     private int idNucleo;
 
-    private boolean primeraVez;
+    private int cantidadCiclosHilillo;
 
 
     public Nucleo(CacheInstrucciones instrucciones, CacheDatos local, CacheDatos otroCacheDatos, int quantum, Planificador planificador, CyclicBarrier barrera,
@@ -44,7 +44,7 @@ public class Nucleo extends Thread {
         this.IR = 0;
         this.cantidadNucleosActivos = cantidadNucleosActivos;
         this.idNucleo = idNucleo;
-        this.primeraVez = true;
+        this.cantidadCiclosHilillo = 0;
     }
 
     private void decodificador(int[] instruccion){
@@ -124,6 +124,8 @@ public class Nucleo extends Thread {
         }
 
         cicloReloj(numCiclos);
+
+        this.cantidadCiclosHilillo += numCiclos; // Se le suma cantidad de ciclos de reloj que lleva el hilillo
     }
 
     public void run(){
@@ -150,6 +152,9 @@ public class Nucleo extends Thread {
         this.pcb.setIr(this.IR);
         this.pcb.setEstado(this.estadoHililloActual);
         this.pcb.setRegistro(registro);
+        int ciclos = this.pcb.getCiclosReloj();
+        ciclos += this.cantidadCiclosHilillo;
+        this.pcb.setCiclosReloj(ciclos);
 
         if(this.estadoHililloActual == 'R')
             planificador.agregarProcesosRestantes(this.pcb);
@@ -159,6 +164,7 @@ public class Nucleo extends Thread {
 
     private void cargarContexto() {
         this.pcb = planificador.usarProcesosRestantes();
+        this.cantidadCiclosHilillo = 0;
 
         this.idHililloActual = pcb.getId();
         this.PC = pcb.getPc();
@@ -210,7 +216,7 @@ public class Nucleo extends Thread {
             }
             ++reloj;
             if(idNucleo == 0) {
-                System.out.print("Hilillo corriendo en núcleo" + this.idNucleo + " es " + this.idHililloActual + ", reloj: " + this.reloj);
+                System.out.print("\rHilillo corriendo en núcleo" + this.idNucleo + " es " + this.idHililloActual + ", reloj: " + this.reloj);
             }
 
             if(idNucleo == 1)
