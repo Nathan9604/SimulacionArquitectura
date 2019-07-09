@@ -26,43 +26,45 @@ public class CacheDatosD implements CacheDatos{
      * lo trae del otro caché o la memoria y luego escribe en ese bloque el dato deseado
      * @param dir Dirección del memoria en donde se desea escribir el dato
      * @param dato Dato que se desea escribir
+     * @return numCiclos Cantidad de ciclos necesarios para realizar la instrucción
      */
     @Override
-    public void escribirDato(int dir, int dato){
+    public int escribirDato(int dir, int dato){
         int numDato = (dir % 16) / 4;
         int numBloque = dir / 16;
         int numBloqueCache = numBloque % ENTRADASCACHE;
+        int numCiclos = 1;
 
         if(!existeBloque(numBloque))
-            cargarBloque(dir, numBloque);
+            numCiclos = cargarBloque(dir, numBloque);
         else
-            // El 0 que se envía de parámetro se debe a que en Java no se pueden definir parámetros por defecto
             otraCache.cambiarBandera(numBloque, 'I');
 
         // Se guarda el nuevo valor y se cambia la bandera a modificado
         entrada[numDato][numBloqueCache] = dato;
         estado[numBloqueCache] = 'M';
+
+        return numCiclos;
     }
 
     /**
      * Verifica que el bloque en donde se encuentra la dirección de memoria este en el caché, si no lo está lo trae del
      * otro caché o la memoria principal y luego lee el dato deseado
      * @param dir Dirección de memoria que se desea leer
-     * @return El dato que se leyó en esa dirección de memoria
+     * @param datos El dato que se leyó en esa dirección de memoria y numCiclos número de ciclos necesarios para hacer la escritura
      */
     @Override
-    public int leerDato(int dir){
-        int dato;
+    public void leerDato(int dir, int[] datos){
         int numDato = (dir % 16) / 4;
         int numBloque = dir / 16;
         int numBloqueCache = numBloque % ENTRADASCACHE;
 
+        datos[1] = 1; // Un ciclos del reloj si leo de mi caché
+
         if(!existeBloque(numBloque))
-            cargarBloque(dir, numBloque);
+            datos[1] = cargarBloque(dir, numBloque);
 
-        dato = entrada[numDato][numBloqueCache];
-
-        return dato;
+        datos[0] = entrada[numDato][numBloqueCache];
     }
 
     /**
@@ -72,9 +74,10 @@ public class CacheDatosD implements CacheDatos{
      * @param numBloque Número del bloque que se desea cargar
      */
     @Override
-    public void cargarBloque(int dir, int numBloque){
+    public int cargarBloque(int dir, int numBloque){
         int[] bloque = new int[4];
         int numBloqueCache = numBloque % ENTRADASCACHE;
+        int numCiclos = 0;
 
         // Si el bloque esta modificado guardelo en memoria antes de cambiarlo
         if(estado[numBloqueCache] == 'M') {
@@ -82,14 +85,19 @@ public class CacheDatosD implements CacheDatos{
                 bloque[i] = entrada[i][numBloqueCache];
 
             memoria.escribirBloqueDatos(etiqueta[numBloqueCache] * TAMENTRADA, bloque);
+            numCiclos = 32;
         }
 
         // Trae el bloque de la otra caché o la memoria principal
         // El 0 que se envía de parámetro se debe a que en Java no se pueden definir parámetros por defecto
-        if(otraCache.existeBloque(numBloque))
+        if(otraCache.existeBloque(numBloque)) {
             otraCache.enviarBloque(numBloque, bloque);
-        else
+            numCiclos += 2;
+        }
+        else {
             memoria.leerBloqueDatos(dir, bloque);
+            numCiclos += 32;
+        }
 
         // Copia el bloque en el caché
         for(int i = 0; i < TAMENTRADA; ++i)
@@ -97,6 +105,8 @@ public class CacheDatosD implements CacheDatos{
 
         estado[numBloqueCache] = 'C';
         etiqueta[numBloqueCache] = numBloque;
+
+        return numCiclos;
     }
 
     /**

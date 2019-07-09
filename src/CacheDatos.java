@@ -5,17 +5,18 @@ interface CacheDatos {
      *
      * @param dir  Dirección del memoria en donde se desea escribir el dato
      * @param dato Dato que se desea escribir
+     * @return numCiclos número de ciclos necesarios para hacer la escritura
      */
-    public void escribirDato(int dir, int dato);
+    public int escribirDato(int dir, int dato);
 
     /**
      * Verifica que el bloque en donde se encuentra la dirección de memoria este en el caché, si no lo está lo trae del
      * otro caché o la memoria principal y luego lee el dato deseado
      *
      * @param dir Dirección de memoria que se desea leer
-     * @return El dato que se leyó en esa dirección de memoria
+     * @param datos El dato que se leyó en esa dirección de memoria y numCiclos número de ciclos necesarios para hacer la escritura
      */
-    public int leerDato(int dir);
+    public void leerDato(int dir, int[] datos);
 
     /**
      * Verifica que el bloque de caché en donde se va a colocar el nuevo bloque no este modificado, si lo está lo guarda
@@ -23,8 +24,9 @@ interface CacheDatos {
      *
      * @param dir            De memoria que se desea cargar
      * @param numBloque      Número del bloque que se desea cargar
+     * @return numCiclos     Cantidad de ciclos utilizados
      */
-    public void cargarBloque(int dir, int numBloque);
+    public int cargarBloque(int dir, int numBloque);
 
     /**
      * Busca el bloque de memoria solicitado en la caché para enviarlo a la otra caché. Si este bloque está modificado

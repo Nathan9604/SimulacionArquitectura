@@ -58,4 +58,15 @@ public class Planificador {
             proceso.print();
         }
     }
+
+    /**
+     * Nos indica si hay hilillos restantes en la lista de hilillos
+     * @return true si hay algún hilillo y false sino hay hilillo
+     */
+    public boolean hayHilillo() {
+        if(this.procesosRestantes.size() > 0)
+            return true;
+        else
+            return false;
+    }
 }

@@ -61,12 +61,12 @@ public class Simulacion {
 
         cantidadNucleosActivos = 0;
 
-        Nucleo n0 = new Nucleo(cachei0, cachedd, cachedc, 4, planificador, lockDatosCache0, lockDatosCache1, lockMemoriaDatos, barrera);
+        Nucleo n0 = new Nucleo(cachei0, cachedc, cachedd,quantum, planificador, barrera, cantidadNucleosActivos);
 
-        Nucleo n1 = new Nucleo(cachei1, cachedc, cachedd,4, planificador, lockDatosCache0, lockDatosCache1, lockMemoriaDatos, barrera, cantidadNucleosActivos);
+        Nucleo n1 = new Nucleo(cachei1, cachedc, cachedd,quantum, planificador, barrera, cantidadNucleosActivos);
 
         n0.start();
-        n1.start();
+        //n1.start();
 
         try {
             n0.join();
