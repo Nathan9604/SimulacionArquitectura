@@ -80,13 +80,13 @@ public class Memoria {
     public void leerBloqueDatos(int dir, int[] bloque){
         // Si la dirección es negativa o empieza después del inicio del último bloque
         // Indique el error y salga del programa.
-        if(dir < 0 || dir > TAMDATOS){
+        if(dir < 0 || dir > TAMDATOS * 4){
             System.out.println("La dirección de memoria " + dir + " no existe, Revise el código");
             System.exit(-1);
         }
 
-        int numBloque = dir/4;
-        int posicionMem = numBloque * 4;
+        int numBloque = dir/16;
+        int posicionMem = (numBloque % 16) / 4;
 
         for(int offset = 0; offset < 4; ++offset)
             bloque[offset] = dato[posicionMem + offset];
