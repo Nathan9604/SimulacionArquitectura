@@ -12,6 +12,7 @@ public class Pcb {
         this.pc = pc;
         estado = 'R';
         registro = new int[32];
+        this.ciclosReloj = 0;
     }
 
     public void setEstado(char estado) {
@@ -71,6 +72,8 @@ public class Pcb {
             System.out.print(registro[i] + " ");
 
         System.out.println("PC " + this.pc);
+
+        System.out.println("\tNúmero de ciclos necesitados para terminar = " + this.ciclosReloj);
 
         System.out.println("******************************************************************************");
     }

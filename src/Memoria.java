@@ -41,12 +41,12 @@ public class Memoria {
     public void escribirBloqueDatos(int dir, int[] bloque){
         // Si la dirección es negativa o empieza después del inicio del último bloque
         // Indique el error y salga del programa.
-        if(dir < 0 || dir > TAMDATOS){
+        if(dir < 0 || dir > TAMDATOS * 4){
             System.out.println("La dirección de memoria " + dir + " no existe, Revise el código");
             System.exit(-1);
         }
 
-        int numBloque = dir/4;
+        int numBloque = dir/16;
         int posicionMem = numBloque * 4;
 
         for(int offset = 0; offset < 4; ++offset)
@@ -104,13 +104,13 @@ public class Memoria {
         for(int fila = 0; fila < 6; ++fila){
 
             System.out.print("Dir  ");
-            for(int numDir = 0; numDir < 4; ++numDir, ++dir)
-                System.out.print(dir + " ");
+            for(int numDir = 0; numDir < 16; ++numDir, ++dir)
+                System.out.print("\t" + dir);
 
             System.out.print("\nDato ");
 
-            for(int col = 0; col < 4; ++col, ++offset)
-                System.out.print(dato[offset] + " ");
+            for(int col = 0; col < 16; ++col, ++offset)
+                System.out.print("\t" + dato[offset]);
 
             System.out.print("\n");
         }
