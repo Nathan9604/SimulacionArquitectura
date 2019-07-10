@@ -1,6 +1,8 @@
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.lang.reflect.Array;
+import java.util.Arrays;
 import java.util.Scanner;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.CyclicBarrier;
@@ -90,6 +92,8 @@ public class Simulacion {
         // Si la carpeta existe cree los "hilillos"
         if (carpeta.exists()) {
             File[] archivos = carpeta.listFiles();
+            //Arrays.sort(archivos);
+
             int numMinHilillos;
 
             // Elije la menor cantidad de hilillos que puede aceptar

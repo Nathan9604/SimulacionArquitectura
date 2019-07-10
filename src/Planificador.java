@@ -13,7 +13,7 @@ public class Planificador {
 
     /**
      * Agrega un nuevo proceso a la cola de procesos restantes
-     * @param Pcb nuevoPcb el nuevo proceso a agregar en la cola
+     * @param nuevoPcb nuevoPcb el nuevo proceso a agregar en la cola
      */
     public void agregarProcesosRestantes(Pcb nuevoPcb) {
         this.procesosRestantes.add(nuevoPcb);
@@ -21,10 +21,11 @@ public class Planificador {
 
     /**
      * Agrega un nuevo proceso a la cola de procesos terminados
-     * @param Pcb nuevoPcb el nuevo proceso a agregar en la cola
+     * @param nuevoPcb nuevoPcb el nuevo proceso a agregar en la cola
      */
     public void agregarProcesosTerminados(Pcb nuevoPcb) {
         this.procesosTerminados.add(nuevoPcb);
+        System.out.println("El proceso del programa con el nombre de " + nuevoPcb.getId() + " acabo de ejecutarse.");
     }
 
     /**
@@ -47,16 +48,6 @@ public class Planificador {
         }
         else{
             return true;
-        }
-    }
-
-    /**
-     * Imprime en pantalla cada uno de los Pcbs que están en la cola de terminados
-     */
-    public void print(){
-        while(this.procesosTerminados.size() > 0){
-            Pcb proceso = this.procesosTerminados.poll();
-            proceso.print();
         }
     }
 
@@ -87,5 +78,15 @@ public class Planificador {
 
     public int getCantidadNucleosActivos() {
         return cantidadNucleosActivos;
+    }
+
+    /**
+     * Imprime en pantalla cada uno de los Pcbs que están en la cola de terminados
+     */
+    public void print(){
+        while(this.procesosTerminados.size() > 0){
+            Pcb proceso = this.procesosTerminados.poll();
+            proceso.print();
+        }
     }
 }

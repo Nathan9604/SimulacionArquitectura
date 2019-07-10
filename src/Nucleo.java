@@ -1,3 +1,4 @@
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.BrokenBarrierException;
@@ -26,6 +27,9 @@ public class Nucleo extends Thread {
     private ReentrantLock lockDatosCacheLocal;
     private ReentrantLock lockDatosCacheOtro;
     private ReentrantLock lockMemoria;
+    private boolean tengoLockLocal;
+    private boolean tengoLockOtro;
+    private boolean tengoLockMemoria;
 
     private int idNucleo;
 
@@ -49,6 +53,9 @@ public class Nucleo extends Thread {
         this.IR = 0;
         this.idNucleo = idNucleo;
         this.cantidadCiclosHilillo = 0;
+        this.tengoLockMemoria = false;
+        this.tengoLockOtro = false;
+        this.tengoLockMemoria = false;
     }
 
     private void decodificador(int[] instruccion){
@@ -231,15 +238,17 @@ public class Nucleo extends Thread {
 
     public void cicloReloj(int numCiclos){
         for(int i = 0; i < numCiclos; i++){
-            /*if(planificador.getCantidadNucleosActivos() > 1){
+            if(planificador.getCantidadNucleosActivos() > 1){
                 try {
-                    barrera.await();
+                    barrera.await(10L, TimeUnit.SECONDS);
                 } catch (InterruptedException ex) {
                     return;
                 } catch (BrokenBarrierException ex) {
                     return;
+                } catch (TimeoutException e) {
+                    e.printStackTrace();
                 }
-            }*/
+            }
 
             ++reloj;
             if(idNucleo == 0) {
@@ -260,27 +269,45 @@ public class Nucleo extends Thread {
     private boolean intentarBloqueo(){
         boolean bloqueoCorrecto = true;
 
-        if(!lockDatosCacheLocal.tryLock()){
+        tengoLockLocal = lockDatosCacheLocal.tryLock();
+        if(!tengoLockLocal){
             desbloquear();
             bloqueoCorrecto = false;
         }
 
-        if(!lockDatosCacheOtro.tryLock()){
-            desbloquear();
-            bloqueoCorrecto = false;
+        if(bloqueoCorrecto) {
+            tengoLockOtro = lockDatosCacheOtro.tryLock();
+            if (!tengoLockOtro) {
+                desbloquear();
+                bloqueoCorrecto = false;
+            }
         }
 
-        if(!lockMemoria.tryLock()){
-            desbloquear();
-            bloqueoCorrecto = false;
+        if(bloqueoCorrecto) {
+            tengoLockMemoria = lockMemoria.tryLock();
+            if (!tengoLockMemoria) {
+                desbloquear();
+                bloqueoCorrecto = false;
+            }
         }
 
         return bloqueoCorrecto;
     }
 
     private void desbloquear(){
-        lockDatosCacheLocal.unlock();
-        lockDatosCacheOtro.unlock();
-        lockMemoria.unlock();
+        if(tengoLockLocal) {
+            lockDatosCacheLocal.unlock();
+            tengoLockLocal = false;
+        }
+
+        if(tengoLockOtro) {
+            lockDatosCacheOtro.unlock();
+            tengoLockOtro = false;
+        }
+
+        if(tengoLockMemoria) {
+            lockMemoria.unlock();
+            tengoLockMemoria = false;
+        }
     }
 }
