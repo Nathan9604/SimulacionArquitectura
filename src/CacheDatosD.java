@@ -35,6 +35,8 @@ public class CacheDatosD implements CacheDatos{
         int numBloqueCache = numBloque % ENTRADASCACHE;
         int numCiclos = 1;
 
+        // Si el bloque no existe en nuestro caché carguelo y si existe verifique que el otro caché no lo tengo o lo
+        // si lo tiene que lo tenga invalido
         if(!existeBloque(numBloque))
             numCiclos = cargarBloque(dir, numBloque);
         else
@@ -61,9 +63,11 @@ public class CacheDatosD implements CacheDatos{
 
         datos[1] = 1; // Un ciclos del reloj si leo de mi caché
 
+        // Si el bloque de datos no existe en el caché carguelo
         if(!existeBloque(numBloque))
             datos[1] = cargarBloque(dir, numBloque);
 
+        // Escriba el dato deseado en la primera entrada del vector, la segunda será para la cantidad de ciclos
         datos[0] = entrada[numDato][numBloqueCache];
     }
 
@@ -89,7 +93,6 @@ public class CacheDatosD implements CacheDatos{
         }
 
         // Trae el bloque de la otra caché o la memoria principal
-        // El 0 que se envía de parámetro se debe a que en Java no se pueden definir parámetros por defecto
         if(otraCache.existeBloque(numBloque)) {
             otraCache.enviarBloque(numBloque, bloque);
             numCiclos += 2;
@@ -170,6 +173,21 @@ public class CacheDatosD implements CacheDatos{
         return estado[numBloqueCache];
     }
 
+    @Override
+    public int getRl() {
+        return rl;
+    }
+
+    @Override
+    public void setRl(int rl) {
+        this.rl = rl;
+    }
+
+    @Override
+    public void setOtraCache(CacheDatos otraCache){
+        this.otraCache = otraCache;
+    }
+
     /**
      * Imprime toda la información deseada del caché de datos
      */
@@ -194,20 +212,5 @@ public class CacheDatosD implements CacheDatos{
         System.out.print("\n");
 
         System.out.println("*************************************************************************");
-    }
-
-    @Override
-    public int getRl() {
-        return rl;
-    }
-
-    @Override
-    public void setRl(int rl) {
-        this.rl = rl;
-    }
-
-    @Override
-    public void setOtraCache(CacheDatos otraCache){
-        this.otraCache = otraCache;
     }
 }

@@ -6,12 +6,12 @@ import java.util.concurrent.TimeUnit;
 import java.lang.*;
 
 public class Nucleo extends Thread {
-    private Pcb pcb;
+    private Pcb pcb;   // PCB del hilillo en el núcleo
     private int registro[];
     private int PC;
     private int RL;
     private int IR;
-    private char estadoHililloActual;
+    private char estadoHililloActual; // Esta procesando o ya finalizo ?
     private String idHililloActual;
     private int quantumHililloActual;
 
@@ -28,9 +28,9 @@ public class Nucleo extends Thread {
     private ReentrantLock lockDatosCacheLocal;
     private ReentrantLock lockDatosCacheOtro;
     private ReentrantLock lockMemoria;
-    private boolean tengoLockLocal;
-    private boolean tengoLockOtro;
-    private boolean tengoLockMemoria;
+    private boolean tengoLockLocal;     // booleano para saber si tengo acceso concedido a mi caché
+    private boolean tengoLockOtro;      // booleano para saber si tengo acceso concedido a la otra caché
+    private boolean tengoLockMemoria;   // booleano para saber si tengo acceso concedido a la memoria
 
     private int idNucleo;
 
@@ -69,6 +69,10 @@ public class Nucleo extends Thread {
 
     }
 
+    /**
+     * Decofidica, ejecuta y realiza operaciones de memoria
+     * @param instruccion es un arreglo que posee los 4 operandos del a instrucción
+     */
     private void decodificador(int[] instruccion){
         int datos[];
         int numCiclos = 1;
@@ -95,7 +99,7 @@ public class Nucleo extends Thread {
                 break;
 
             case 5: // lw
-                datos = new int[2];
+                datos = new int[2]; // En la posición 0 estará el dato en la 1 el número de ciclos de la operación
                 while(!intentarBloqueo()); // Intente bloquear hasta que lo logre
                 cacheDatosLocal.leerDato(registro[instruccion[2]] + instruccion[3], datos);
                 this.solicitudesAccesoMemoria++; // Se suma acceso a memoria a estadísticas
@@ -126,7 +130,7 @@ public class Nucleo extends Thread {
                 break;
 
             case 51: // lr
-                datos = new int[2];
+                datos = new int[2]; // En la posición 0 estará el dato en la 1 el número de ciclos de la operación
 
                 // Si el RL del otro núcleo tiene la dirección que voy a usar lo inválido
                 if(otroCacheDatos.getRl() == registro[instruccion[2]])
@@ -138,7 +142,7 @@ public class Nucleo extends Thread {
                 desbloquear(); // Desbloquea los recursos de la simulación
                 registro[instruccion[1]] = 0;//datos[0];
                 numCiclos = datos[1];
-                cacheDatosLocal.setRl(registro[instruccion[2]]);
+                cacheDatosLocal.setRl(registro[instruccion[2]]); // Establece el valor del RL
                 break;
 
             case 52: // sc
@@ -180,23 +184,29 @@ public class Nucleo extends Thread {
         this.cantidadCiclosHilillo += numCiclos; // Se le suma cantidad de ciclos de reloj que lleva el hilillo
     }
 
+    /**
+     * Método inicial del hilo. En el se hacen los cambios de contexto y cada una de las instrucciones
+     */
     public void run(){
-        planificador.agregarNucleoActivo();
+        planificador.agregarNucleoActivo(); // Hay un nuevo núcleo
 
-        while (planificador.hayHilillo()){
-            cargarContexto();
+        while (planificador.hayHilillo()){  // Mientras haya hilillos que procesar
+            cargarContexto(); // cargue el contexto del hilillo
 
+            // Mientras tenga quantum y el hilillo no haya acabado
             while (estadoHililloActual == 'R' && this.quantumHililloActual > 0) {
-                obtenerSiguienteInstruccion();
+                obtenerSiguienteInstruccion(); // Haga fetch de la siguiente instrucción
                 IR = PC;
                 PC += 4;
-                decodificador(instruccionActual);
+                decodificador(instruccionActual); // Decodifiquela y ejecutela a la vez
                 --this.quantumHililloActual;
             }
 
-            guardarContexto();
+            guardarContexto(); // Guarde el contexto de este PCB
         }
 
+        // Ponga candados antes de indicar que el núcleo acabo para evitar problemas de sincronización
+        // con la barrera
         planificador.ponerCandadoNucleosActivos();
         planificador.desactivarNucleoActivo();
         planificador.liberarCandadoNucleosActivos();
@@ -224,6 +234,10 @@ public class Nucleo extends Thread {
 
     }
 
+    /**
+     * Se almacenan todas las variables modificadas a lo largo del quantum en el PCB el cual es distinto para
+     * cada uno de los hilillos
+     */
     private void guardarContexto() {
         this.pcb.setPc(this.PC);
         this.pcb.setIr(this.IR);
@@ -233,12 +247,17 @@ public class Nucleo extends Thread {
         ciclos += this.cantidadCiclosHilillo;
         this.pcb.setCiclosReloj(ciclos);
 
+        // Si el estado del hilillo es F significa que el hilillo ya acabo, si es R es que le resta
+        // tiempo de CPU
         if(this.estadoHililloActual == 'R')
             planificador.agregarProcesosRestantes(this.pcb);
         else
             planificador.agregarProcesosTerminados(this.pcb);
     }
 
+    /**
+     * Carga el contexto de un proceso o hilillo en el núcleo
+     */
     private void cargarContexto() {
         this.pcb = planificador.usarProcesosRestantes();
         this.cantidadCiclosHilillo = 0;
@@ -281,34 +300,49 @@ public class Nucleo extends Thread {
         }
     }
 
+    /**
+     * Fetch, lee la siguiente instrucción en la memoria y la carga en un vector de instrucción
+     */
     private void obtenerSiguienteInstruccion(){
         int numCiclos = cacheInstrucciones.leerInstruccion(PC, instruccionActual);
 
         cicloReloj(numCiclos);
     }
 
+    /**
+     * Realiza todos los calculos matematicos de las operaciones en las instrucciones aritméticas
+     * @param operacion Código de operación que nos indica la operación que se debe realizar
+     * @param operando1 Operando 1 de la operación a realizar
+     * @param operando2 Operando 2 de la operación a realizar
+     * @return resultado el a operación aritmética
+     */
     private int Alu(int operacion, int operando1, int operando2){
         int resultado = -1;
 
         switch(operacion){
-            case 1:
+            case 1: // Suma
                 resultado = operando1 + operando2;
                 break;
-            case 2:
+            case 2: // Resta
                 resultado = operando1 - operando2;
                 break;
-            case 3:
+            case 3: // Multiplicación
                 resultado = operando1 * operando2;
                 break;
-            case 4:
+            case 4: // División
                 resultado = operando1 / operando2;
                 break;
         }
         return resultado;
     }
 
+    /**
+     * Posee la barrera utilizada para sincronizar ambos núcleos, además de eso refresca los datos desplegados en pantalla
+     * @param numCiclos Número de ciclos quetardo la operación en realizarse
+     */
     public void cicloReloj(int numCiclos){
         for(int i = 0; i < numCiclos; i++){
+            // Si hay más de 1 núcleo espere en la barrera
             if(planificador.getCantidadNucleosActivos() > 1){
                 try {
                     barrera.await(2L, TimeUnit.SECONDS);
@@ -321,6 +355,7 @@ public class Nucleo extends Thread {
                 }
             }
 
+            // Refrescamiento de los datos en la vista
             ++reloj;
             if(idNucleo == 0) {
                 System.out.print("\rHilillo corriendo en núcleo" + this.idNucleo + " es " + this.idHililloActual + ", reloj: " + this.reloj);
@@ -329,23 +364,30 @@ public class Nucleo extends Thread {
             if(idNucleo == 1)
                 System.out.print(" /// Hilillo corriendo en núcleo" + this.idNucleo + " es " + this.idHililloActual + ", reloj: " + this.reloj + "\r");
 
-            /*try {
+            // Pequeño retraso para visualizar los cambios en la vista
+            try {
                 Thread.sleep(50);
             } catch(InterruptedException e) {
-                System.out.println("got interrupted!");
-            }*/
+            }
         }
     }
 
+    /**
+     * Intenta bloquear cada uno de los recursos de la simulación, es decir ambas cachés de instrucciones
+     * y la memoria principal. Si no puede bloquear 1 libera todas e intenta de nuevo
+     * @return true si pudo bloquear todos los recursos y false en caso contrario
+     */
     private boolean intentarBloqueo(){
         boolean bloqueoCorrecto = true;
 
+        // Intente bloquear el caché local
         tengoLockLocal = lockDatosCacheLocal.tryLock();
         if(!tengoLockLocal){
             desbloquear();
             bloqueoCorrecto = false;
         }
 
+        // Intente bloquear el otro caché de datos
         if(bloqueoCorrecto) {
             tengoLockOtro = lockDatosCacheOtro.tryLock();
             if (!tengoLockOtro) {
@@ -354,6 +396,7 @@ public class Nucleo extends Thread {
             }
         }
 
+        // Intente bloquear la memoria principal
         if(bloqueoCorrecto) {
             tengoLockMemoria = lockMemoria.tryLock();
             if (!tengoLockMemoria) {
@@ -365,6 +408,10 @@ public class Nucleo extends Thread {
         return bloqueoCorrecto;
     }
 
+    /**
+     * Desbloquea cada uno de los recursos que tenga el hilo bloqueado, solo desbloqueará los que bloqueo para
+     * evitar problemas de sincronización
+     */
     private void desbloquear(){
         if(tengoLockLocal) {
             lockDatosCacheLocal.unlock();

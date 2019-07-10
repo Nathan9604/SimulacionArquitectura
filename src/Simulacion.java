@@ -58,7 +58,7 @@ public class Simulacion {
      * para imprimir en pantalla toda la información importante de la simulación
      */
     public void empezarSimulacion(){
-        lectorCarpeta();
+        lectorCarpeta(); // Crea cada PCB y llena la memoria
 
         Nucleo n0 = new Nucleo(cachei0, cachedd, cachedc,quantum, planificador, barrera,0, lockDatosCache0, lockDatosCache1, lockMemoria);
         Nucleo n1 = new Nucleo(cachei1, cachedc, cachedd,quantum, planificador, barrera, 1, lockDatosCache1, lockDatosCache0, lockMemoria);

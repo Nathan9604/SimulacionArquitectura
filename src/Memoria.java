@@ -28,6 +28,7 @@ public class Memoria {
             System.exit(-1);
         }
 
+        // Se escribe la instrucción en memoria
         for(int i = 0; i < instruccion.length; ++i){
             instruccione[dir + i] = instruccion[i];
         }
@@ -49,6 +50,7 @@ public class Memoria {
         int numBloque = dir/16;
         int posicionMem = numBloque * 4;
 
+        // Se escribe el bloque de datos en la memoria
         for(int offset = 0; offset < 4; ++offset)
             dato[posicionMem + offset] = bloque[offset];
     }
@@ -68,6 +70,7 @@ public class Memoria {
             System.exit(-1);
         }
 
+        // Se escribe en el vector auxiliar los datos del bloque de instrucción
         for(int offset = 0; offset < 16; ++offset)
             bloque[offset] = instruccione[posicionMem + offset];
     }
@@ -88,6 +91,7 @@ public class Memoria {
         int numBloque = dir/16;
         int posicionMem = (numBloque % 16) / 4;
 
+        // Guarda en el vector auxiliar el bloque de datos deseado
         for(int offset = 0; offset < 4; ++offset)
             bloque[offset] = dato[posicionMem + offset];
     }
