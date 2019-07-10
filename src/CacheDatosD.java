@@ -84,7 +84,7 @@ public class CacheDatosD implements CacheDatos{
             for(int i = 0; i < TAMENTRADA; ++i)
                 bloque[i] = entrada[i][numBloqueCache];
 
-            memoria.escribirBloqueDatos(etiqueta[numBloqueCache] * TAMENTRADA, bloque);
+            memoria.escribirBloqueDatos(etiqueta[numBloqueCache] * 16, bloque);
             numCiclos = 32;
         }
 
@@ -126,7 +126,7 @@ public class CacheDatosD implements CacheDatos{
             for(int i = 0; i < TAMENTRADA; ++i)
                 bloqueGuardar[i] = entrada[i][numBloqueCache];
 
-            memoria.escribirBloqueDatos(etiqueta[numBloqueCache] * TAMENTRADA, bloqueGuardar);
+            memoria.escribirBloqueDatos(etiqueta[numBloqueCache] * 16, bloqueGuardar);
             estado[numBloqueCache] = 'C';
         }
 
@@ -179,17 +179,17 @@ public class CacheDatosD implements CacheDatos{
 
         for(int i = 0; i < TAMENTRADA; ++i) {
             for (int j = 0; j < ENTRADASCACHE; ++j)
-                System.out.print(entrada[i][j] + " ");
+                System.out.print(entrada[i][j] + "\t\t");
             System.out.print("\n");
         }
 
         for(int i = 0; i < ENTRADASCACHE; ++i)
-            System.out.print(etiqueta[i] + " ");
+            System.out.print(etiqueta[i] + "\t\t");
 
         System.out.print("\n");
 
         for(int i = 0; i < ENTRADASCACHE; ++i)
-            System.out.print(estado[i] + " ");
+            System.out.print(estado[i] + "\t\t");
 
         System.out.print("\n");
 

@@ -1,14 +1,17 @@
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Planificador {
     private Queue<Pcb> procesosRestantes;
     private Queue<Pcb> procesosTerminados;
     private int cantidadNucleosActivos;
+    private ReentrantLock lockNucleosActivos; // Sincroniza el acceso a la variable cantidadNucleosActivos
 
     public Planificador(){
         procesosRestantes = new LinkedList<Pcb>();
         procesosTerminados = new LinkedList<Pcb>();
+        lockNucleosActivos = new ReentrantLock();
     }
 
     /**
@@ -25,7 +28,6 @@ public class Planificador {
      */
     public void agregarProcesosTerminados(Pcb nuevoPcb) {
         this.procesosTerminados.add(nuevoPcb);
-        System.out.println("El proceso del programa con el nombre de " + nuevoPcb.getId() + " acabo de ejecutarse.");
     }
 
     /**
@@ -74,6 +76,20 @@ public class Planificador {
      */
     public void desactivarNucleoActivo() {
         --this.cantidadNucleosActivos;
+    }
+
+    /**
+     * Permite mantener sincronizado el valor de la variable cantidadNucleosActuvos
+     */
+    public void ponerCandadoNucleosActivos(){
+        lockNucleosActivos.lock();
+    }
+
+    /**
+     * Permite mantener sincronizado el valor de la variable cantidadNucleosActuvos
+     */
+    public void liberarCandadoNucleosActivos(){
+        lockNucleosActivos.unlock();
     }
 
     public int getCantidadNucleosActivos() {

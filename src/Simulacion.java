@@ -92,7 +92,6 @@ public class Simulacion {
         // Si la carpeta existe cree los "hilillos"
         if (carpeta.exists()) {
             File[] archivos = carpeta.listFiles();
-            //Arrays.sort(archivos);
 
             int numMinHilillos;
 

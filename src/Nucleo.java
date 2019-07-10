@@ -122,7 +122,7 @@ public class Nucleo extends Thread {
                 while(!intentarBloqueo()); // Intente bloquear hasta que lo logre
                 cacheDatosLocal.leerDato(registro[instruccion[2]], datos);
                 desbloquear(); // Desbloquea los recursos de la simulación
-                registro[instruccion[1]] = datos[0];
+                registro[instruccion[1]] = 0;//datos[0];
                 numCiclos = datos[1];
                 cacheDatosLocal.setRl(registro[instruccion[2]]);
                 break;
@@ -177,8 +177,10 @@ public class Nucleo extends Thread {
 
             guardarContexto();
         }
-
+        System.out.println("PENE");
+        planificador.ponerCandadoNucleosActivos();
         planificador.desactivarNucleoActivo();
+        planificador.liberarCandadoNucleosActivos();
     }
 
     private void guardarContexto() {
@@ -240,13 +242,13 @@ public class Nucleo extends Thread {
         for(int i = 0; i < numCiclos; i++){
             if(planificador.getCantidadNucleosActivos() > 1){
                 try {
-                    barrera.await(10L, TimeUnit.SECONDS);
+                    barrera.await(2L, TimeUnit.SECONDS);
                 } catch (InterruptedException ex) {
                     return;
                 } catch (BrokenBarrierException ex) {
                     return;
                 } catch (TimeoutException e) {
-                    e.printStackTrace();
+
                 }
             }
 
@@ -259,7 +261,7 @@ public class Nucleo extends Thread {
                 System.out.print(" /// Hilillo corriendo en núcleo" + this.idNucleo + " es " + this.idHililloActual + ", reloj: " + this.reloj + "\r");
 
             /*try {
-                Thread.sleep(100);
+                Thread.sleep(50);
             } catch(InterruptedException e) {
                 System.out.println("got interrupted!");
             }*/

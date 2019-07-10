@@ -47,7 +47,7 @@ public class Memoria {
         }
 
         int numBloque = dir/16;
-        int posicionMem = (numBloque % 16) / 4;
+        int posicionMem = numBloque * 4;
 
         for(int offset = 0; offset < 4; ++offset)
             dato[posicionMem + offset] = bloque[offset];
@@ -105,12 +105,12 @@ public class Memoria {
 
             System.out.print("Dir  ");
             for(int numDir = 0; numDir < 16; ++numDir, ++dir)
-                System.out.print(dir + " ");
+                System.out.print("\t" + dir);
 
             System.out.print("\nDato ");
 
             for(int col = 0; col < 16; ++col, ++offset)
-                System.out.print(dato[offset] + " ");
+                System.out.print("\t" + dato[offset]);
 
             System.out.print("\n");
         }

@@ -12,7 +12,7 @@ class CacheDatosC implements CacheDatos {
         private char estado[];          // Vector que indica el estado del bloque en cierta entrada
         private int bloqueMasViejo[];   // Vector que nos indica la posición del caché a la que se le dio un uso más tiempo
 
-        private final int ENTRADASVIA = 8;
+        private final int ENTRADASVIA = 4;
 
         public Via(){
             entrada = new int[TAMENTRADA][ENTRADASVIA];
@@ -92,7 +92,7 @@ class CacheDatosC implements CacheDatos {
                 for(int i = 0; i < TAMENTRADA; ++i)
                     bloque[i] = entrada[i][numEntrada];
 
-                memoria.escribirBloqueDatos(etiqueta[numEntrada] * TAMENTRADA, bloque);
+                memoria.escribirBloqueDatos(etiqueta[numEntrada] * 16, bloque);
 
                 numCiclos = 32;
             }
@@ -137,7 +137,7 @@ class CacheDatosC implements CacheDatos {
                     for (int i = 0; i < TAMENTRADA; ++i)
                         bloqueGuardar[i] = entrada[i][numEntrada];
 
-                    memoria.escribirBloqueDatos(etiqueta[numEntrada] * TAMENTRADA, bloqueGuardar);
+                    memoria.escribirBloqueDatos(etiqueta[numEntrada] * 16, bloqueGuardar);
                     estado[numEntrada] = 'C';
                 }
 
@@ -206,15 +206,20 @@ class CacheDatosC implements CacheDatos {
         }
 
         /**
-         * Cambia el valor de la bandera de estado de cierto bloque
+         * Cambia el valor de la bandera de estado de cierto bloque, puede haber varias veces el mismo bloque (invalido
+         * o no) por lo que cambiará la bandera a invalido todas las veces que ese bloque este en la vía
          * @param numBloque Número del bloque al que se le desea cambiar la bandera
          * @param bandera Valor de la bandera que se desea colocar
          */
         public void cambiarBandera(int numBloque, char bandera){
-            int numEntrada = indiceBloque(numBloque);
+            int numEntrada = 0;
 
-            if(numEntrada != -1)
-                etiqueta[numEntrada] = bandera;
+            //do {
+                numEntrada = indiceBloque(numBloque);
+
+                if (numEntrada != -1)
+                    estado[numEntrada] = bandera;
+            //}while(numEntrada != -1);
         }
 
         public char obtenerBandera(int numBloque){
@@ -228,7 +233,7 @@ class CacheDatosC implements CacheDatos {
          */
         public void printFilaCache(int fila){
             for(int i = 0; i < ENTRADASVIA; ++i)
-                System.out.print(entrada[fila][i] + " ");
+                System.out.print(entrada[fila][i] + "\t\t");
         }
 
         /**
@@ -236,7 +241,7 @@ class CacheDatosC implements CacheDatos {
          */
         public void printEtiqueta(){
             for(int i = 0; i < ENTRADASVIA; ++i)
-                System.out.print(etiqueta[i] + " ");
+                System.out.print(etiqueta[i] + "\t\t");
         }
 
         /**
@@ -244,7 +249,7 @@ class CacheDatosC implements CacheDatos {
          */
         public void printEstado(){
             for(int i = 0; i < ENTRADASVIA; ++i)
-                System.out.print(estado[i] + " ");
+                System.out.print(estado[i] + "\t\t");
         }
     }
 
