@@ -40,11 +40,14 @@ class CacheDatosC implements CacheDatos {
             int numEntrada;
             int numCiclos = 1;
 
+            // Si el bloque no esta en la caché lo carga, caso contrario intenta invalidar el mismo bloque en la
+            // otra caché (si esta lo tiene)
             if(!existeBloque(numBloque))
                 numCiclos = cargarBloque(dir, numBloque);
             else
                 otraCache.cambiarBandera(numBloque, 'I');
 
+            // Busca la posición del bloque en la vía
             numEntrada = indiceBloque(numBloque);
 
             // Guarda el nuevo dato y marca el bloque como Modificado
@@ -66,9 +69,12 @@ class CacheDatosC implements CacheDatos {
             int numEntrada;
             datos[1] = 1; // Si el dato está en nuestro caché solo toma 1 ciclo de reloj
 
+            // Si la caché no tiene el bloque lo carga
             if(!existeBloque(numBloque))
                 datos[1] = cargarBloque(dir, numBloque);
 
+            // Busca el indice en la vía en donde está el bloque, cómo fue anteriormente cargado es un hecho que esta
+            // en la vía
             numEntrada = indiceBloque(numBloque);
 
             datos[0] = entrada[numDato][numEntrada];
@@ -171,7 +177,7 @@ class CacheDatosC implements CacheDatos {
         }
 
         /**
-         * Busca el índice del bloque en donde se encuentra el bloque que se desea
+         * Busca el índice del bloque en la vía en donde se encuentra el bloque que se desea
          * @param numBloque Número de bloque que se desea buscar
          * @return El número de la entrada del caché en donde se encuentra el bloque deseado
          */
@@ -222,6 +228,11 @@ class CacheDatosC implements CacheDatos {
             //}while(numEntrada != -1);
         }
 
+        /**
+         * Busca el valor de la bandera de cierto bloque
+         * @param numBloque bloque al que se le desea conocer el valor de la bandera
+         * @return el estado del bloque en la caché
+         */
         public char obtenerBandera(int numBloque){
             int numEntrada = indiceBloque(numBloque);
             return estado[numEntrada];

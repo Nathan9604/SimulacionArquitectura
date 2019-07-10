@@ -28,6 +28,7 @@ public class CacheInstrucciones {
         int numInstruccion = (ir % 16) / 4;
         int numCiclos = 1;
 
+        // Si el bloque de la instrucción no está en el caché la trae de la memoria
         if(!estaEnCache(numBloque)) {
             leerMemoriaInstruccion(numBloque, numBloqueCache);
             numCiclos = 32;
@@ -50,6 +51,7 @@ public class CacheInstrucciones {
 
         etiqueta[numBloqueCache] = numBloque;
 
+        // Carga cada uno de los datos del bloque auxiliar en la caché
         for(int i = 0; i < 16; ++i)
             entrada[i][numBloqueCache] = bloque[i];
     }
@@ -63,6 +65,7 @@ public class CacheInstrucciones {
     private void cargarInstruccion(int numBloqueCache, int numInstruccion, int[] instruccion){
         int posicionBloque = numInstruccion * 4;
 
+        // Carga la instrucción al bloque auxiliar
         for(int i = 0; i < 4; ++i)
             instruccion[i] = entrada[posicionBloque + i][numBloqueCache];
     }
