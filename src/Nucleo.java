@@ -21,9 +21,11 @@ public class Nucleo extends Thread {
     private int reloj;
     private int quantumTotal;
     private int instruccionActual[];
-    private int cantidadNucleosActivos;
 
     private CyclicBarrier barrera;
+    private ReentrantLock lockDatosCacheLocal;
+    private ReentrantLock lockDatosCacheOtro;
+    private ReentrantLock lockMemoria;
 
     private int idNucleo;
 
@@ -31,7 +33,7 @@ public class Nucleo extends Thread {
 
 
     public Nucleo(CacheInstrucciones instrucciones, CacheDatos local, CacheDatos otroCacheDatos, int quantum, Planificador planificador, CyclicBarrier barrera,
-                  int cantidadNucleosActivos, int idNucleo){
+                  int idNucleo, ReentrantLock lockDatosCacheLocal, ReentrantLock lockDatosCacheOtro, ReentrantLock lockMemoria){
         this.cacheDatosLocal = local;
         this.otroCacheDatos = otroCacheDatos;
         this.cacheInstrucciones = instrucciones;
@@ -41,8 +43,10 @@ public class Nucleo extends Thread {
         this.reloj = 0;
         this.quantumTotal = quantum;
         this.barrera = barrera;
+        this.lockDatosCacheLocal = lockDatosCacheLocal;
+        this.lockDatosCacheOtro = lockDatosCacheOtro;
+        this.lockMemoria = lockMemoria;
         this.IR = 0;
-        this.cantidadNucleosActivos = cantidadNucleosActivos;
         this.idNucleo = idNucleo;
         this.cantidadCiclosHilillo = 0;
     }
@@ -74,36 +78,58 @@ public class Nucleo extends Thread {
 
             case 5: // lw
                 datos = new int[2];
+                while(!intentarBloqueo()); // Intente bloquear hasta que lo logre
                 cacheDatosLocal.leerDato(registro[instruccion[2]] + instruccion[3], datos);
+                desbloquear(); // Desbloquea los recursos de la simulación
                 registro[instruccion[1]] = datos[0];
                 numCiclos = datos[1];
                 break;
 
             case 37: // sw
+                // Si el RL del otro núcleo tiene la dirección que voy a usar lo inválido
+                if(otroCacheDatos.getRl() == (registro[instruccion[1]] + instruccion[3]))
+                    otroCacheDatos.setRl(-1);
+
+                while(!intentarBloqueo()); // Intente bloquear hasta que lo logre
                 numCiclos = cacheDatosLocal.escribirDato(registro[instruccion[1]] + instruccion[3], registro[instruccion[2]]);
+                desbloquear(); // Desbloquea los recursos de la simulación
                 break;
 
             case 99: // beq
                 if(registro[instruccion[1]] == registro[instruccion[2]])
-                    PC += (4 * instruccion[3]) - 4;
+                    PC += 4 * instruccion[3];
                 break;
 
             case 100: //bne
                 if(registro[instruccion[1]] != registro[instruccion[2]])
-                    PC += (4 * instruccion[3]) - 4;
+                    PC += 4 * instruccion[3];
                 break;
 
             case 51: // lr
                 datos = new int[2];
+
+                // Si el RL del otro núcleo tiene la dirección que voy a usar lo inválido
+                if(otroCacheDatos.getRl() == registro[instruccion[2]])
+                    otroCacheDatos.setRl(-1);
+
+                while(!intentarBloqueo()); // Intente bloquear hasta que lo logre
                 cacheDatosLocal.leerDato(registro[instruccion[2]], datos);
-                registro[instruccion[1]] = 0; // todo ver si se pone 0 o el dato de esa posición datos[0];
+                desbloquear(); // Desbloquea los recursos de la simulación
+                registro[instruccion[1]] = datos[0];
                 numCiclos = datos[1];
                 cacheDatosLocal.setRl(registro[instruccion[2]]);
                 break;
 
             case 52: // sc
-                if(cacheDatosLocal.getRl() == registro[instruccion[1]])
+                if(cacheDatosLocal.getRl() == registro[instruccion[1]]) {
+                    // Si el RL del otro núcleo tiene la dirección que voy a usar lo inválido
+                    if(otroCacheDatos.getRl() == registro[instruccion[1]])
+                        otroCacheDatos.setRl(-1);
+
+                    while(!intentarBloqueo()); // Intente bloquear hasta que lo logre
                     numCiclos = cacheDatosLocal.escribirDato(registro[instruccion[1]], registro[instruccion[2]]);
+                    desbloquear(); // Desbloquea los recursos de la simulación
+                }
                 else
                     registro[instruccion[2]] = 0;
                 break;
@@ -129,7 +155,7 @@ public class Nucleo extends Thread {
     }
 
     public void run(){
-        cantidadNucleosActivos++;
+        planificador.agregarNucleoActivo();
 
         while (planificador.hayHilillo()){
             cargarContexto();
@@ -144,7 +170,8 @@ public class Nucleo extends Thread {
 
             guardarContexto();
         }
-        cantidadNucleosActivos--;
+
+        planificador.desactivarNucleoActivo();
     }
 
     private void guardarContexto() {
@@ -204,8 +231,7 @@ public class Nucleo extends Thread {
 
     public void cicloReloj(int numCiclos){
         for(int i = 0; i < numCiclos; i++){
-            if(cantidadNucleosActivos > 1){
-                System.out.print("Pasa por barrera");
+            /*if(planificador.getCantidadNucleosActivos() > 1){
                 try {
                     barrera.await();
                 } catch (InterruptedException ex) {
@@ -213,7 +239,8 @@ public class Nucleo extends Thread {
                 } catch (BrokenBarrierException ex) {
                     return;
                 }
-            }
+            }*/
+
             ++reloj;
             if(idNucleo == 0) {
                 System.out.print("\rHilillo corriendo en núcleo" + this.idNucleo + " es " + this.idHililloActual + ", reloj: " + this.reloj);
@@ -222,31 +249,38 @@ public class Nucleo extends Thread {
             if(idNucleo == 1)
                 System.out.print(" /// Hilillo corriendo en núcleo" + this.idNucleo + " es " + this.idHililloActual + ", reloj: " + this.reloj + "\r");
 
-            try {
-                Thread.sleep(300);
+            /*try {
+                Thread.sleep(100);
             } catch(InterruptedException e) {
                 System.out.println("got interrupted!");
-            }
+            }*/
         }
     }
-}
 
-/*private boolean intentarBloqueo(){
-        boolean respuesta = true;
-        if(lockDatosCache0.tryLock() == false){
-            respuesta = false;
+    private boolean intentarBloqueo(){
+        boolean bloqueoCorrecto = true;
+
+        if(!lockDatosCacheLocal.tryLock()){
+            desbloquear();
+            bloqueoCorrecto = false;
         }
-        if(lockDatosCache1.tryLock() == false){
-            respuesta = false;
+
+        if(!lockDatosCacheOtro.tryLock()){
+            desbloquear();
+            bloqueoCorrecto = false;
         }
-        if(lockMemoriaDatos.tryLock() == false){
-            respuesta = false;
+
+        if(!lockMemoria.tryLock()){
+            desbloquear();
+            bloqueoCorrecto = false;
         }
-        return respuesta;
+
+        return bloqueoCorrecto;
     }
 
     private void desbloquear(){
-        lockDatosCache0.unlock();
-        lockDatosCache1.unlock();
-        lockMemoriaDatos.unlock();
-    }*/
+        lockDatosCacheLocal.unlock();
+        lockDatosCacheOtro.unlock();
+        lockMemoria.unlock();
+    }
+}

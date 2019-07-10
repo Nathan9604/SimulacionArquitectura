@@ -104,12 +104,12 @@ public class Memoria {
         for(int fila = 0; fila < 6; ++fila){
 
             System.out.print("Dir  ");
-            for(int numDir = 0; numDir < 4; ++numDir, ++dir)
+            for(int numDir = 0; numDir < 16; ++numDir, ++dir)
                 System.out.print(dir + " ");
 
             System.out.print("\nDato ");
 
-            for(int col = 0; col < 4; ++col, ++offset)
+            for(int col = 0; col < 16; ++col, ++offset)
                 System.out.print(dato[offset] + " ");
 
             System.out.print("\n");

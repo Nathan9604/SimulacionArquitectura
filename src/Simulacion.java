@@ -19,9 +19,8 @@ public class Simulacion {
     private Nucleo nucleo1;
     private ReentrantLock lockDatosCache0;
     private ReentrantLock lockDatosCache1;
-    private ReentrantLock lockMemoriaDatos;
+    private ReentrantLock lockMemoria;
     private CyclicBarrier barrera;
-    private int cantidadNucleosActivos;
 
     private int numHilillos;
     private int quantum;
@@ -48,7 +47,7 @@ public class Simulacion {
         planificador = new Planificador();
         lockDatosCache0 = new ReentrantLock();
         lockDatosCache1 = new ReentrantLock();
-        lockMemoriaDatos = new ReentrantLock();
+        lockMemoria = new ReentrantLock();
         barrera = new CyclicBarrier(2,null);
     }
 
@@ -59,11 +58,8 @@ public class Simulacion {
     public void empezarSimulacion(){
         lectorCarpeta();
 
-        cantidadNucleosActivos = 0;
-
-        Nucleo n0 = new Nucleo(cachei0, cachedd, cachedc,quantum, planificador, barrera, cantidadNucleosActivos, 0);
-
-        Nucleo n1 = new Nucleo(cachei1, cachedc, cachedd,quantum, planificador, barrera, cantidadNucleosActivos, 1);
+        Nucleo n0 = new Nucleo(cachei0, cachedd, cachedc,quantum, planificador, barrera,0, lockDatosCache0, lockDatosCache1, lockMemoria);
+        Nucleo n1 = new Nucleo(cachei1, cachedc, cachedd,quantum, planificador, barrera, 1, lockDatosCache1, lockDatosCache0, lockMemoria);
 
         n0.start();
         n1.start();
@@ -88,9 +84,9 @@ public class Simulacion {
      */
     public void lectorCarpeta(){
         // Se debe cambiar según el lugar de la carpeta
-        //File carpeta = new File("/home/nathan/Simulacion_Arqui/SimulacionArquitectura/src/ArchivosSimulacion");
+        File carpeta = new File("/home/nathan/Simulacion_Arqui/SimulacionArquitectura/src/ArchivosSimulacion");
 
-        File carpeta = new File("/home/estalg/Escritorio/SimulacionArquitectura/src/ArchivosSimulacion");
+        //File carpeta = new File("/home/estalg/Escritorio/SimulacionArquitectura/src/ArchivosSimulacion");
         // Si la carpeta existe cree los "hilillos"
         if (carpeta.exists()) {
             File[] archivos = carpeta.listFiles();

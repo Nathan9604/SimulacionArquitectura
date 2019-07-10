@@ -73,7 +73,7 @@ public class Pcb {
 
         System.out.println("PC " + this.pc);
 
-        System.out.println("Número de ciclos necesitados para terminar = " + this.ciclosReloj);
+        System.out.println("\tNúmero de ciclos necesitados para terminar = " + this.ciclosReloj);
 
         System.out.println("******************************************************************************");
     }

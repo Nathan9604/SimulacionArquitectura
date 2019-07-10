@@ -4,6 +4,7 @@ import java.util.Queue;
 public class Planificador {
     private Queue<Pcb> procesosRestantes;
     private Queue<Pcb> procesosTerminados;
+    private int cantidadNucleosActivos;
 
     public Planificador(){
         procesosRestantes = new LinkedList<Pcb>();
@@ -68,5 +69,23 @@ public class Planificador {
             return true;
         else
             return false;
+    }
+
+    /**
+     * Nos permite llevar un control de la cantidad de núcleos activos en el sistema agregando uno
+     */
+    public void agregarNucleoActivo() {
+        ++this.cantidadNucleosActivos;
+    }
+
+    /**
+     * Nos permite llevar un control de la cantidad de núcleos activos en el sistema descontando uno de los ya existentes
+     */
+    public void desactivarNucleoActivo() {
+        --this.cantidadNucleosActivos;
+    }
+
+    public int getCantidadNucleosActivos() {
+        return cantidadNucleosActivos;
     }
 }
