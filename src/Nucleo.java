@@ -3,6 +3,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.TimeUnit;
+import java.lang.*;
 
 public class Nucleo extends Thread {
     private Pcb pcb;
@@ -35,6 +36,12 @@ public class Nucleo extends Thread {
 
     private int cantidadCiclosHilillo;
 
+    private int cantidadVecesHilillo[]; // Para medir la cantidad de veces que corrió cada hilillo en en nucleo
+
+    private int solicitudesAccesoMemoria; // Para llevar cuenta de todas las solicitudes a memoria
+
+    private int totalFallosCache; // Lleva cuenta de los fallos de cache que se producen
+
 
     public Nucleo(CacheInstrucciones instrucciones, CacheDatos local, CacheDatos otroCacheDatos, int quantum, Planificador planificador, CyclicBarrier barrera,
                   int idNucleo, ReentrantLock lockDatosCacheLocal, ReentrantLock lockDatosCacheOtro, ReentrantLock lockMemoria){
@@ -56,6 +63,10 @@ public class Nucleo extends Thread {
         this.tengoLockMemoria = false;
         this.tengoLockOtro = false;
         this.tengoLockMemoria = false;
+        this.cantidadVecesHilillo = new int[7];
+        this.solicitudesAccesoMemoria = 0;
+        this.totalFallosCache = 0;
+
     }
 
     private void decodificador(int[] instruccion){
@@ -87,6 +98,7 @@ public class Nucleo extends Thread {
                 datos = new int[2];
                 while(!intentarBloqueo()); // Intente bloquear hasta que lo logre
                 cacheDatosLocal.leerDato(registro[instruccion[2]] + instruccion[3], datos);
+                this.solicitudesAccesoMemoria++; // Se suma acceso a memoria a estadísticas
                 desbloquear(); // Desbloquea los recursos de la simulación
                 registro[instruccion[1]] = datos[0];
                 numCiclos = datos[1];
@@ -99,6 +111,7 @@ public class Nucleo extends Thread {
 
                 while(!intentarBloqueo()); // Intente bloquear hasta que lo logre
                 numCiclos = cacheDatosLocal.escribirDato(registro[instruccion[1]] + instruccion[3], registro[instruccion[2]]);
+                this.solicitudesAccesoMemoria++; // Se suma acceso a memoria a estadísticas
                 desbloquear(); // Desbloquea los recursos de la simulación
                 break;
 
@@ -121,6 +134,7 @@ public class Nucleo extends Thread {
 
                 while(!intentarBloqueo()); // Intente bloquear hasta que lo logre
                 cacheDatosLocal.leerDato(registro[instruccion[2]], datos);
+                this.solicitudesAccesoMemoria++; // Se suma acceso a memoria a estadísticas
                 desbloquear(); // Desbloquea los recursos de la simulación
                 registro[instruccion[1]] = 0;//datos[0];
                 numCiclos = datos[1];
@@ -135,6 +149,7 @@ public class Nucleo extends Thread {
 
                     while(!intentarBloqueo()); // Intente bloquear hasta que lo logre
                     numCiclos = cacheDatosLocal.escribirDato(registro[instruccion[1]], registro[instruccion[2]]);
+                    this.solicitudesAccesoMemoria++; // Se suma acceso a memoria a estadísticas
                     desbloquear(); // Desbloquea los recursos de la simulación
                 }
                 else
@@ -158,6 +173,10 @@ public class Nucleo extends Thread {
 
         cicloReloj(numCiclos);
 
+        if(numCiclos > 4){ // Si hay más de esta cantidad de ciclos, hubo fallo de caché
+            this.totalFallosCache++;
+        }
+
         this.cantidadCiclosHilillo += numCiclos; // Se le suma cantidad de ciclos de reloj que lleva el hilillo
     }
 
@@ -177,10 +196,32 @@ public class Nucleo extends Thread {
 
             guardarContexto();
         }
-        System.out.println("PENE");
+
         planificador.ponerCandadoNucleosActivos();
         planificador.desactivarNucleoActivo();
         planificador.liberarCandadoNucleosActivos();
+
+        System.out.println("Accesos a memoria del núcleo" + idNucleo + " es: " + this.solicitudesAccesoMemoria + "\n");
+
+        System.out.println("Fallos del núcleo" + idNucleo + " es: " + this.totalFallosCache + "\n");
+
+        double accesos = this.solicitudesAccesoMemoria;
+
+        double fallos = this.totalFallosCache;
+
+        double tasaFallos = fallos / accesos;
+
+        System.out.println("La tasa de fallos del núcleo " + idNucleo + " es: " + tasaFallos + "\n");
+
+        System.out.println("La cantidad de veces que corren los hilillos en el nucleo " + idNucleo + " es: " + "\n" +
+                "0: " + this.cantidadVecesHilillo[0] + "\n" +
+                "1: " + this.cantidadVecesHilillo[1] + "\n" +
+                "2: " + this.cantidadVecesHilillo[2] + "\n" +
+                "3: " + this.cantidadVecesHilillo[3] + "\n" +
+                "4: " + this.cantidadVecesHilillo[4] + "\n" +
+                "5: " + this.cantidadVecesHilillo[5] + "\n" +
+                "6: " + this.cantidadVecesHilillo[6] + "\n");
+
     }
 
     private void guardarContexto() {
@@ -210,6 +251,34 @@ public class Nucleo extends Thread {
 
         this.RL = -1;
         this.quantumHililloActual = quantumTotal;
+
+        char hilillo = this.idHililloActual.charAt(0);
+
+        int indice = Character.getNumericValue(hilillo);
+
+        switch(indice) {
+            case 0:
+                this.cantidadVecesHilillo[indice]++;
+                break;
+            case 1:
+                this.cantidadVecesHilillo[indice]++;
+                break;
+            case 2:
+                this.cantidadVecesHilillo[indice]++;
+                break;
+            case 3:
+                this.cantidadVecesHilillo[indice]++;
+                break;
+            case 4:
+                this.cantidadVecesHilillo[indice]++;
+                break;
+            case 5:
+                this.cantidadVecesHilillo[indice]++;
+                break;
+            case 6:
+                this.cantidadVecesHilillo[indice]++;
+                break;
+        }
     }
 
     private void obtenerSiguienteInstruccion(){

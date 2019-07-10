@@ -86,9 +86,9 @@ public class Simulacion {
      */
     public void lectorCarpeta(){
         // Se debe cambiar según el lugar de la carpeta
-        File carpeta = new File("/home/nathan/Simulacion_Arqui/SimulacionArquitectura/src/ArchivosSimulacion");
+        //File carpeta = new File("/home/nathan/Simulacion_Arqui/SimulacionArquitectura/src/ArchivosSimulacion");
 
-        //File carpeta = new File("/home/estalg/Escritorio/SimulacionArquitectura/src/ArchivosSimulacion");
+        File carpeta = new File("src/ArchivosSimulacion");
         // Si la carpeta existe cree los "hilillos"
         if (carpeta.exists()) {
             File[] archivos = carpeta.listFiles();
