@@ -215,6 +215,7 @@ public class Nucleo extends Thread {
 
         System.out.println("Fallos del núcleo" + idNucleo + " es: " + this.totalFallosCache + "\n");
 
+        // Aquí se saca la tasa de fallos del núcleo
         double accesos = this.solicitudesAccesoMemoria;
 
         double fallos = this.totalFallosCache;
@@ -271,6 +272,7 @@ public class Nucleo extends Thread {
         this.RL = -1;
         this.quantumHililloActual = quantumTotal;
 
+        // Esta parte es para ir sumando la cantidad de veces de cada hilillo en el núcleo
         char hilillo = this.idHililloActual.charAt(0);
 
         int indice = Character.getNumericValue(hilillo);
